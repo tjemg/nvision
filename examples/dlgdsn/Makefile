@@ -1,5 +1,5 @@
-INCLUDE = -I/usr/include/rhtvision
-LIBS    = -lrhtv -lstdc++
+INCLUDE = -I../../include
+LIBS    = ../../libtv.a -lstdc++ -lX11 -lXmu -lgpm -lncurses
 CC      = gcc
 TARGET  = dlgdsn
 SOURCE  = codebldr.cc consted.cc dsgobjs.cc freedsgn.cc propdlgs.cc propedit.cc strmoper.cc tappwnd.cc

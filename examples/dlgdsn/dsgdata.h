@@ -23,10 +23,10 @@
 #define MAX_LABEL_LENGTH 30
 #define MAX_TITLE_LENGTH 62
 
-char TNameStr[MAX_LABEL_LENGTH];
-char TTitleStr[MAX_TITLE_LENGTH];
+typedef char TNameStr[MAX_LABEL_LENGTH];
+typedef char TTitleStr[MAX_TITLE_LENGTH];
 
-struct TPoint;
+typedef struct TPoint;
 
 #define _viewdata_() \
    TPoint origin;       /*   8 */ \
@@ -40,7 +40,7 @@ struct TPoint;
    ushort dragMode;     /*   2 */ \
    ushort helpCtx       /*   2 */ \
 //                          88 % 4 = 0
-struct TDefaultData
+typedef struct TDefaultData
 {
    ushort options;
    ushort eventMask;
@@ -51,25 +51,25 @@ struct TDefaultData
    ushort flags;
 };
 
-struct TViewData // Wrapper struct
+typedef struct TViewData // Wrapper struct
 {
   _viewdata_();
 };
 
-struct TDsgObjData
+typedef struct TDsgObjData
 {
   _viewdata_();
   int tabOrder;
 };
 
-struct TDDialogData
+typedef struct TDDialogData
 {
   _viewdata_();
   TTitleStr title;
   ushort flags;
 };
 
-struct TDInputData
+typedef struct TDInputData
 {
    _viewdata_();
    int tabOrder;
@@ -78,14 +78,14 @@ struct TDInputData
    TNameStr validatorData;
 };
 
-struct TDLabelData
+typedef struct TDLabelData
 {
    _viewdata_();
    TNameStr text;
    TNameStr link;
 };
 
-struct TDMemoData
+typedef struct TDMemoData
 {
    _viewdata_();
    int tabOrder;
@@ -96,13 +96,13 @@ struct TDMemoData
    uint32 bufSize;
 };
 
-struct TDStaticData
+typedef struct TDStaticData
 {
    _viewdata_();
    char * text;
 };
 
-struct TDButtonData
+typedef struct TDButtonData
 {
    _viewdata_();
    int tabOrder;
@@ -111,14 +111,14 @@ struct TDButtonData
    ushort flags;
 };
 
-struct TDClusterData
+typedef struct TDClusterData
 {
    _viewdata_();
    int tabOrder;
    void * items;
 };
 
-struct TDListBoxData
+typedef struct TDListBoxData
 {
    _viewdata_();
    int tabOrder;

@@ -1,4 +1,0 @@
-#. This definition doesn't exist in TV, only the plural
-#: test.cc:55
-msgid "~W~indow"
-msgstr ""

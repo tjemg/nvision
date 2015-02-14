@@ -78,7 +78,8 @@ TestDialog::TestDialog() :
  insert(hsb);
  insert(vsb);
  TTerminal *tt=new TTerminal(TRect(1,1,57,12),hsb,vsb,4096);
- tt->do_sputn("Hello!\nThat's just a test in the buffer.\nThat's all falks.",58);
+ tt->do_sputn("Hello!",6);
+ //tt->do_sputn("Hello!\nThat's just a test in the buffer.\nThat's all falks.",58);
  //tt->do_sputn("Hello!\r\nThat's just a test in the buffer.\r\nThat's all falks.",60);
  insert(tt);
  insert(new TButton(TRect(25,15,35,17),"O~K~",cmOK,bfNormal));
