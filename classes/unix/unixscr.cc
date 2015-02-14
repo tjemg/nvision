@@ -534,16 +534,16 @@ void TScreenUNIX::writeBlock(int dst, int len, ushort *old, ushort *src)
              if (code<32 && ((CTRL_ALWAYS>>code) & 1))
                {/* This character can't be printed, we must use unicode */
                 /* Enter UTF-8 and start constructing 0xF000 code */
-                safeput(p,ENTER_UTF8 "\xEF\x80");
+                safeput(p,(char *)ENTER_UTF8 "\xEF\x80");
                 /* Set the last 6 bits */
                 *p++=code | 0x80;
                 /* Escape UTF-8 */
-                safeput(p,EXIT_UTF8);
+                safeput(p,(char *)EXIT_UTF8);
                }
              else if (code==128+27)
                {/* A specially evil code: Meta+ESC, it can't be printed */
                 /* Just send Unicode 0xF09B to screen */
-                safeput(p,ENTER_UTF8 "\xEF\x82\x9B" EXIT_UTF8);
+                safeput(p,(char *)ENTER_UTF8 "\xEF\x82\x9B" EXIT_UTF8);
                }
              else
                 /* The rest pass directly unchanged */
@@ -996,8 +996,8 @@ int TScreenUNIX::System(const char *command, pid_t *pidChild, int in,
        
     argv[0]=getenv("SHELL");
     if (!argv[0])
-       argv[0]="/bin/sh";
-    argv[1]="-c";
+       argv[0]=(char *)"/bin/sh";
+    argv[1]=(char *)"-c";
     argv[2]=(char *)command;
     argv[3]=0;
     execvp(argv[0],argv);

@@ -25,28 +25,23 @@
 #define Uses_TCalculator
 #include <tv.h>
 
-// SET: Moved to the class, made ASCII
-char *TCalculator::keyChar[20] =
-    {    "C",   "<-",    "%",   "+-",
-         "7",    "8",    "9",    "/",
-         "4",    "5",    "6",    "*",
-         "1",    "2",    "3",    "-",
-         "0",    ".",    "=",    "+"
-    };
+const char *TCalculator::keyChar[20] = {    "C",   "<-",    "%",   "+-",
+                                            "7",    "8",    "9",    "/",
+                                            "4",    "5",    "6",    "*",
+                                            "1",    "2",    "3",    "-",
+                                            "0",    ".",    "=",    "+"
+                                       };
 
 TCalculator::TCalculator() :
-    // SET: The display size must be satisfied
     TWindowInit( &TCalculator::initFrame ),
     TDialog( TRect(5, 3, 5+6+DISPLAYLEN, 18), __("Pocket Calculator") )
 {
     TView *tv;
-    TRect r;
+    TRect  r;
 
     options |= ofFirstClick;
 
-    // SET: enlarged buttons
-    for(int i = 0; i <= 19; i++)
-        {
+    for (int i = 0; i <= 19; i++) {
         int x = (i%4)*6+3;
         int y = (i/4)*2+4;
         r = TRect( x, y, x+6, y+2 );
@@ -54,14 +49,13 @@ TCalculator::TCalculator() :
         tv = new TButton( r, keyChar[i], cmCalcButton+i, bfNormal | bfBroadcast );
         tv->options &= ~ofSelectable;
         insert( tv );
-        }
+    }
     r = TRect( 3, 2, 3+DISPLAYLEN, 3 ); // SET, that's checked in setDisplay
     insert( new TCalcDisplay(r) );
 }
 
 #if !defined( NO_STREAM )
-TStreamable *TCalculator::build()
-{
+TStreamable *TCalculator::build() {
     return new TCalculator( streamableInit );
 }
 #endif

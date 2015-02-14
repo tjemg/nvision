@@ -1,7 +1,7 @@
-INCLUDE = -I/usr/include/rhtvision
+INCLUDE = -I../../include
 LIBS    = ../../libtv.a -lstdc++ -lX11 -lXmu -lgpm -lncurses
 CC      = gcc
-TARGET  = tvguid01
+TARGET  = tvguid16
 
 all: $(TARGET)
 

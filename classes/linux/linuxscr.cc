@@ -231,14 +231,13 @@ struct stCodePageLang TScreenLinux::langCodePages[]=
 
 // Structure for TIOCLINUX service 2 set selection, very kernel
 // dependent.
-typedef struct
-{
- char service    __attribute__((packed));
- ushort xs       __attribute__((packed));
- ushort ys       __attribute__((packed));
- ushort xe       __attribute__((packed));
- ushort ye       __attribute__((packed));
- ushort sel_mode __attribute__((packed));
+typedef struct {
+ char service;
+ ushort xs;
+ ushort ys;
+ ushort xe;
+ ushort ye;
+ ushort sel_mode;
 } setSel;
 
 static uint32 adler32(uint32 adler, const char *buf, unsigned len);
@@ -1541,8 +1540,8 @@ int TScreenLinux::System(const char *command, pid_t *pidChild, int in,
    
     argv[0]=getenv("SHELL");
     if (!argv[0])
-       argv[0]="/bin/sh";
-    argv[1]="-c";
+       argv[0]=(char *)"/bin/sh";
+    argv[1]=(char *)"-c";
     argv[2]=(char *)command;
     argv[3]=0;
     execvp(argv[0],argv);

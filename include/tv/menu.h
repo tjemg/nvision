@@ -4,11 +4,6 @@
  *      Copyright (c) 1994 by Borland International
  *      All Rights Reserved.
  *
-
-Modified by Robert H”hne to be used for RHIDE.
-
- *
- *
  */
 
 #if defined( Uses_TMenu ) && !defined( __TMenu )
@@ -16,20 +11,25 @@ Modified by Robert H”hne to be used for RHIDE.
 
 class TMenuItem;
 
-class TMenu
-{
+class TMenu {
 
-public:
-    TMenu() : items(0), deflt(0) {};
-    TMenu( TMenuItem& itemList )
-        { items = &itemList; deflt = &itemList; }
-    TMenu( TMenuItem& itemList, TMenuItem& TheDefault )
-        { items = &itemList; deflt = &TheDefault; }
-    ~TMenu();
+    public:
+        TMenu() : items(0), deflt(0) {};
 
-    TMenuItem *items;
-    TMenuItem *deflt;
+        TMenu( TMenuItem& itemList ) {
+            items = &itemList;
+            deflt = &itemList;
+        }
 
+        TMenu( TMenuItem& itemList, TMenuItem& TheDefault ) {
+            items = &itemList;
+            deflt = &TheDefault;
+        }
+
+        ~TMenu();
+
+        TMenuItem *items;
+        TMenuItem *deflt;
 };
 
 #endif  // Uses_TMenu

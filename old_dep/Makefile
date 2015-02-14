@@ -8,3 +8,5 @@ all: $(OBJECTS)
 %.o: %.cc
 	gcc -c $(C_FLAGS) $(INCLUDE) $<
 
+clean:
+	rm -rf *.o

@@ -65,7 +65,7 @@ void TFileInputLine::handleEvent( TEvent& event )
         {
         if( (((TSearchRec *)event.message.infoPtr)->attr & FA_DIREC) != 0 )
            strCat(data,((TSearchRec *)event.message.infoPtr)->name,
-                  DIRSEPARATOR_,((TFileDialog *)owner)->wildCard,
+                  (char *)DIRSEPARATOR_,((TFileDialog *)owner)->wildCard,
                   maxLen);
         else
            strCat(data,((TSearchRec *)event.message.infoPtr)->name,0,0,maxLen);

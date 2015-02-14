@@ -306,8 +306,7 @@ unsigned char TGKeyLinux::kbExtraFlags[128] =
 };
 
 /************************** Escape sequences tree **************************/
-typedef struct node
-{
+struct node {
  char value;
  unsigned char code;
  unsigned char modifiers;

@@ -295,8 +295,8 @@ int TScreenX11::System(const char *command, pid_t *pidChild, int in, int out,
        char *argv[4];
        argv[0]=getenv("SHELL");
        if (!argv[0])
-          argv[0]="/bin/sh";
-       argv[1]="-c";
+          argv[0]=(char *)"/bin/sh";
+       argv[1]=(char *)"-c";
        argv[2]=(char *)command;
        argv[3]=0;
        execvp(argv[0],argv);
@@ -1003,8 +1003,8 @@ TScreenX11::TScreenX11()
  char *s="Test";
  XStringListToTextProperty(&s,1,&name);*/
 
- classHint->res_name="tvapp";   /* Take resources for tvapp */
- classHint->res_class="XTVApp"; /* X Turbo Vision Application */
+ classHint->res_name=(char *)"tvapp";   /* Take resources for tvapp */
+ classHint->res_class=(char *)"XTVApp"; /* X Turbo Vision Application */
 
  /* Size hints are just hints, not all WM take care about them */
  sizeHints->flags=PResizeInc | PMinSize | PBaseSize;
