@@ -19,7 +19,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-#include <cl/needs.h>
+//#include <cl/needs.h>
 
 #ifdef NEEDS_REGEX
 /* AIX requires this to be the first thing in the file. */

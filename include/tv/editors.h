@@ -317,8 +317,7 @@ inline opstream& operator << ( opstream& os, TEditor* cl )
 
 class TEvent;
 
-struct TMemoData
-{
+struct TMemoData {
     uint32 length;
     char buffer[65536];
 };
