@@ -31,63 +31,63 @@
 // The destructor takes care of deallocating memory when we delete a
 // SFrecord item and when we kill a containing TMyDialog.
 struct SFrecord {
-  char *title;
-  char *author;
-  ~SFrecord() {
-    delete title;
-    delete author;
-  }
+    char *title;
+    char *author;
+    ~SFrecord() {
+        delete title;
+        delete author;
+    }
 };
 
 
 //////////////////////////////////////////// SFCollection //////////////
 class SFCollection : public TCollection {
-  public:
-    SFCollection(ccIndex aLimit, ccIndex aDelta)
-        :TCollection(aLimit, aDelta) {}
+    public:
+        SFCollection(ccIndex aLimit, ccIndex aDelta)
+            :TCollection(aLimit, aDelta) {}
 
-    // This member function returns the SFrecord item located at
-    // element 'index' in the collection.  This member function allows
-    // use to treat a collection like a conventional array. Because it
-    // allows me to "sneak up" on a functional application, it is
-    // always amongst the first member functions I implement.
-    SFrecord *at(ccIndex index) {
-      return (SFrecord*)TCollection::at(index);
-    }
+        // This member function returns the SFrecord item located at
+        // element 'index' in the collection.  This member function allows
+        // use to treat a collection like a conventional array. Because it
+        // allows me to "sneak up" on a functional application, it is
+        // always amongst the first member functions I implement.
+        SFrecord *at(ccIndex index) {
+            return (SFrecord*)TCollection::at(index);
+        }
 
-    // Although not explicitly used by the LISTBOX5 application, this
-    // function is called by the internal mechanism of a TListBox
-    // object so muct be properly implemented.
-    virtual ccIndex indexOf(SFrecord *item) {
-      return TCollection::indexOf(item);
-    }
+        // Although not explicitly used by the LISTBOX5 application, this
+        // function is called by the internal mechanism of a TListBox
+        // object so muct be properly implemented.
+        virtual ccIndex indexOf(SFrecord *item) {
+            return TCollection::indexOf(item);
+        }
 
-    // A public user-specified member function to get a value (i.e.,
-    // count) which is otherwise only accessible from classes derived
-    // from this class because 'count' is protected.
-    short getCount() {
-      return count;
-    }
+        // A public user-specified member function to get a value (i.e.,
+        // count) which is otherwise only accessible from classes derived
+        // from this class because 'count' is protected.
+        short getCount() {
+            return count;
+        }
 
-  protected:
-  private:
+    protected:
+    private:
 
-    // Required by the LISTBOX5 application to delete an SFrecord.
-    // Is directly called by the delete command. It is also called
-    // by TNSCollection::freeAll() for each item in the list when
-    // we close a TMyDialog.
-    virtual void freeItem(void *item) {
+        // Required by the LISTBOX5 application to delete an SFrecord.
+        // Is directly called by the delete command. It is also called
+        // by TNSCollection::freeAll() for each item in the list when
+        // we close a TMyDialog.
+        virtual void freeItem(void *item) {
 
-      // Invokes the SFrecord destructor to deallocate the title
-      // and author.
-      delete (SFrecord*)item;
-    }
+            // Invokes the SFrecord destructor to deallocate the title
+            // and author.
+            delete (SFrecord*)item;
+        }
 
-    // These do nothing (yet) but they have to be defined otherwise
-    // the compiler will complain that we are trying to instantiate
-    // an abstract class.
-    virtual void *readItem(ipstream&) { return 0; }
-    virtual void writeItem(void *, opstream&) {}
+        // These do nothing (yet) but they have to be defined otherwise
+        // the compiler will complain that we are trying to instantiate
+        // an abstract class.
+        virtual void *readItem(ipstream&) { return 0; }
+        virtual void writeItem(void *, opstream&) {}
 };
 
 #endif  // SFCOLLEC_H

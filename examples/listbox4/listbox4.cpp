@@ -99,7 +99,7 @@ class TMyDialog : public TDialog {
 	public:
 		TMyDialog(TRect trect, int cols, char *title, char *sarray[]);
     ~TMyDialog() {
-      delete theCollection;
+        delete theCollection;
     }
     void handleEvent(TEvent &);
     void deleteString();

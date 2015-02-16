@@ -40,6 +40,7 @@ TNSCollection::TNSCollection() :
 
 TNSCollection::~TNSCollection()
 {
+    freeAll();
     delete[] items;
 }
 
