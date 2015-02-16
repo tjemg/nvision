@@ -1,0 +1,6 @@
+=================
+  draw
+  ====
+
+  TV example of changing the text in a dialog box by sending a message from
+  the idle loop and redrawing the text.  Also changes the text colors.
