@@ -43,7 +43,7 @@ TParamText::TParamText( const TRect& bounds ) :
 
 TParamText::~TParamText()
 {
-    delete str;
+    delete[] str;
 }
 
 // , int maxLen ) isn't part of TV 2.0
@@ -63,7 +63,7 @@ int TParamText::getTextLen()
     return (str != 0) ? strlen( str ) : 0;
 }
 
-void TParamText::setText( char *fmt, ... )
+void TParamText::setText( const char *fmt, ... )
 {
     va_list ap;
 

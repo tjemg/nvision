@@ -4,7 +4,7 @@
   This header defines which functions must be defined for each supported
 compiler.@p
 
-  Copyright (c) 2000-2001 by Salvador E. Tropea
+  Copyright (c) 2000-2005 by Salvador E. Tropea
   Covered by the GPL license.
 
 ***************************************************************************/
@@ -26,6 +26,8 @@ compiler.@p
   #define NEEDS_MKSTEMP
   #define NEEDS_NL_LANGINFO
   #define NEEDS_GETLINE
+  // Internal implementation is broken. Is the same provided by MSVC.
+  #define NEEDS_SNPRINTF
  #endif
  
  // Win32 Cygwin
@@ -133,5 +135,19 @@ compiler.@p
  // Internal implementation is broken.
  #define NEEDS_SNPRINTF
  #define NEEDS_UNC
+#endif
+
+// Open Watcom for Win32 is supported
+#ifdef TVComp_Watcom
+ #define NEEDS_FIXPATH
+ #define NEEDS_GLOB
+ #define NEEDS_FNMATCH
+ #define NEEDS_UNC
+ #define NEEDS_GETOPT
+ #define NEEDS_OPENDIR
+ #define NEEDS_NL_LANGINFO
+ #define NEEDS_IFSTREAMGETLINE
+ #define NEEDS_GETLINE
+ #define NEEDS_GETCURDIR
 #endif
 

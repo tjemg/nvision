@@ -1,7 +1,7 @@
 /*****************************************************************************
 
   Linux screen routines.
-  Copyright (c) 2002 by Salvador E. Tropea (SET)
+  Copyright (c) 2002-2003 by Salvador E. Tropea (SET)
   Covered by the GPL license.
 
   Configuration variables:
@@ -80,7 +80,6 @@ void TScreenXTerm::Init()
  TScreen::setCrtData=defaultSetCrtData;
  TScreen::setVideoMode=SetVideoMode;
  TScreen::setVideoModeExt=SetVideoModeExt;
- TScreen::setCharacter=SetCharacter;
  TScreen::System_p=System;
  TScreen::setCharacters=SetCharacters;
  TDisplay::checkForWindowSize=CheckForWindowSize;
@@ -401,11 +400,6 @@ void TScreenXTerm::SetVideoModeExt(char *mode)
  CheckSizeBuffer(oldWidth,oldHeight);
 }
 
-void TScreenXTerm::SetCharacter(unsigned offset,ushort value)
-{
- setCharacters(offset,&value,1);
-}
-
 void TScreenXTerm::SetCharacters(unsigned dst, ushort *src, unsigned len)
 {
  ushort *old=screenBuffer+dst;
@@ -634,13 +628,16 @@ int TScreenXTerm::System(const char *command, pid_t *pidChild, int in,
     if (err!=-1)
        dup2(err,STDERR_FILENO);
 
-    argv[0]=getenv("SHELL");
+    argv[0]=newStr(getenv("SHELL"));
     if (!argv[0])
-       argv[0]=(char *)"/bin/sh";
-    argv[1]=(char *)"-c";
-    argv[2]=(char *)command;
-    argv[3]=0;
+       argv[0]=newStr("/bin/sh");
+    argv[1]=newStr("-c");
+    argv[2]=newStr(command);
+    argv[3]=NULL;
     execvp(argv[0],argv);
+    delete[] argv[0];
+    delete[] argv[1];
+    delete[] argv[2];
     // We get here only if exec failed
     _exit(127);
    }

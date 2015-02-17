@@ -1,6 +1,6 @@
 /**[txh]********************************************************************
 
-  Copyright 2001-2002 by Salvador E. Tropea
+  Copyright 2001-2009 by Salvador E. Tropea
   This file is covered by the GPL license.
   
   Module: Screen
@@ -55,6 +55,9 @@ TVScreenFontRequestCallBack
 long     TScreen::forcedAppCP=-1,
          TScreen::forcedScrCP=-1,
          TScreen::forcedInpCP=-1;
+int      TScreen::maxAppHelperHandlers=8;
+const char
+        *TScreen::windowClass="XTVApp";
 
 /*****************************************************************************
   Function pointer members initialization
@@ -70,7 +73,7 @@ void   (*TScreen::Resume)()                     =dummy;
 ushort (*TScreen::getCharacter)(unsigned offset)=TScreen::defaultGetCharacter;
 void   (*TScreen::getCharacters)(unsigned offset, ushort *buf, unsigned count)
                                                 =TScreen::defaultGetCharacters;
-void   (*TScreen::setCharacter)(unsigned offset, ushort value)
+void   (*TScreen::setCharacter)(unsigned offset, uint32 value)
                                                 =TScreen::defaultSetCharacter;
 void   (*TScreen::setCharacters)(unsigned offset, ushort *values, unsigned count)
                                                 =TScreen::defaultSetCharacters;
@@ -89,6 +92,14 @@ int    (*TScreen::setFont_p)(int changeP, TScreenFont256 *fontP,
 void   (*TScreen::restoreFonts)()               =TScreen::defaultRestoreFonts;
 int    (*TScreen::setVideoModeRes_p)(unsigned w, unsigned h, int fW, int fH)
                                                 =TScreen::defaultSetVideoModeRes;
+TScreen::appHelperHandler (*TScreen::openHelperApp)(AppHelper kind)
+                                                =TScreen::defaultOpenHelperApp;
+Boolean (*TScreen::closeHelperApp)(appHelperHandler id)
+                                                =TScreen::defaultCloseHelperApp;
+Boolean (*TScreen::sendFileToHelper)(appHelperHandler id, const char *file, void *extra)
+                                                =TScreen::defaultSendFileToHelper;
+const char *(*TScreen::getHelperAppError)()     =TScreen::defaultGetHelperAppError;
+
 
 /*****************************************************************************
   Default behaviors for the members
@@ -139,22 +150,31 @@ ushort TScreen::defaultFixCrtMode(ushort mode)
 
 ushort TScreen::defaultGetCharacter(unsigned offset)
 {
+ if (drawingMode==unicode16)
+    offset*=2;
  return screenBuffer[offset];
 }
 
 void TScreen::defaultGetCharacters(unsigned offset, ushort *buf, unsigned count)
 {
- memcpy(buf,screenBuffer+offset,count*sizeof(ushort));
+ if (drawingMode==unicode16)
+    memcpy(buf,screenBuffer+offset*2,count*sizeof(ushort)*2);
+ else
+    memcpy(buf,screenBuffer+offset,count*sizeof(ushort));
 }
 
-void TScreen::defaultSetCharacter(unsigned offset, ushort value)
+void TScreen::defaultSetCharacter(unsigned offset, uint32 value)
 {
- screenBuffer[offset]=value;
+ uint16 Value=value;
+ setCharacters(offset,&Value,1);
 }
 
 void TScreen::defaultSetCharacters(unsigned offset, ushort *values, unsigned count)
 {
- memcpy(screenBuffer+offset,values,count*2);
+ if (drawingMode==unicode16)
+    memcpy(screenBuffer+offset*2,values,count*2*2);
+ else
+    memcpy(screenBuffer+offset,values,count*2);
 }
 
 int TScreen::defaultSystem(const char *command, pid_t *pidChild, int in, int out,
@@ -179,6 +199,16 @@ int  TScreen::defaultGetFontGeometryRange(unsigned &, unsigned &,
 int  TScreen::defaultSetFont(int , TScreenFont256 *, int , TScreenFont256 *,
                              int, int) { return 0; }
 void TScreen::defaultRestoreFonts() {}
+
+TScreen::appHelperHandler TScreen::defaultOpenHelperApp(TScreen::AppHelper)
+{ return -1; }
+Boolean TScreen::defaultCloseHelperApp(appHelperHandler) { return False; }
+Boolean TScreen::defaultSendFileToHelper(appHelperHandler, const char *, void *)
+{ return False; }
+const char *TScreen::defaultGetHelperAppError()
+{
+ return __("This feature isn't implemented by the current driver.");
+}
 
 /*****************************************************************************
   Real members
@@ -241,6 +271,10 @@ stDriver Drivers[]=
    TV_WinGr_Driver_Entry
    { TV_WinNTDriverCheck,  50, "WinNT" },
   #endif
+ #endif
+
+ #ifdef HAVE_ALLEGRO
+   { TV_AlconDriverCheck,  30, "AlCon" },
  #endif
 };
 

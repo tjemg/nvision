@@ -15,3 +15,4 @@ clean:
 	cd old_dep;  make clean
 	cd examples; make clean
 	rm -rf *.a
+	rm -rf *~

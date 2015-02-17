@@ -238,14 +238,16 @@ unsigned char TGKeyXTerm::kbExtraFlags[128] =
 };
 
 /************************** Escape sequences tree **************************/
-struct node {
-    union {
-        char value;
-        char keys;
-    };
-    uchar code;
-    uchar modifiers;
-    node *next;
+struct node
+{
+ union
+ {
+  char value;
+  char keys;
+ };
+ uchar code;
+ uchar modifiers;
+ node *next;
 };
 
 // This is how Xterm usually encodes the modifiers

@@ -11,19 +11,15 @@ Modified by Robert H”hne to be used for RHIDE.
  *
  */
 #define Uses_string
-
+#define Uses_dir
 #define Uses_TFileInputLine
 #define Uses_TEvent
 #define Uses_TSearchRec
 #define Uses_TFileDialog
 #include <tv.h>
 
-#if defined(TVCompf_djgpp)
-#include <dir.h>
-#endif
 #if defined(TVComp_BCPP)
-#include <dir.h>
-#include <dos.h>
+ #include <dos.h>
 #endif
 
 TFileInputLine::TFileInputLine( const TRect& bounds, short aMaxLen ) :
@@ -43,8 +39,9 @@ NULL.@p
 ***************************************************************************/
 
 static
-void strCat(char *dest, char *s1, char *s2, char *s3, int max)
+int strCat(char *d, const char *s1, const char *s2, const char *s3, int max)
 {
+ char *dest=d;
  char *end=dest+max;
 
  for (;*s1 && dest<end; s1++) *(dest++)=*s1;
@@ -53,6 +50,7 @@ void strCat(char *dest, char *s1, char *s2, char *s3, int max)
  if (s3)
     for (;*s3 && dest<end; s3++) *(dest++)=*s3;
  *dest=0;
+ return dest-d;
 }
 
 void TFileInputLine::handleEvent( TEvent& event )
@@ -64,11 +62,11 @@ void TFileInputLine::handleEvent( TEvent& event )
       )
         {
         if( (((TSearchRec *)event.message.infoPtr)->attr & FA_DIREC) != 0 )
-           strCat(data,((TSearchRec *)event.message.infoPtr)->name,
-                  (char *)DIRSEPARATOR_,((TFileDialog *)owner)->wildCard,
+           dataLen=strCat(data,((TSearchRec *)event.message.infoPtr)->name,
+                  DIRSEPARATOR_,((TFileDialog *)owner)->wildCard,
                   maxLen);
         else
-           strCat(data,((TSearchRec *)event.message.infoPtr)->name,0,0,maxLen);
+           dataLen=strCat(data,((TSearchRec *)event.message.infoPtr)->name,0,0,maxLen);
         drawView();
         }
 }

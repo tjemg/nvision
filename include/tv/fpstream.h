@@ -25,11 +25,12 @@ Andris Pavenis and Christoph Bauer.
 #if defined( Uses_fpstream ) && !defined( __fpstream )
 #define __fpstream
 
-class fpstream : public fpbase, public iopstream
+class CLY_EXPORT fpstream : public fpbase, public iopstream
 {
 public:
     fpstream();
     fpstream( const char *, CLY_OpenModeT, int = CLY_FBOpenProtDef );
+    fpstream( CLY_OpenModeT, const char* , int = CLY_FBOpenProtDef );
     fpstream( int );
     fpstream( int, char *, int );
     ~fpstream();

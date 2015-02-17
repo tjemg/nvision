@@ -12,10 +12,10 @@
 #define Uses_string
 #define Uses_stdio
 #define Uses_time
-#define Uses_signal
 #define Uses_TEvent
 #define Uses_TEventQueue
 #define Uses_TScreen
+#define Uses_signal
 #include <tv.h>
 
 // I delay the check to generate as much dependencies as possible
@@ -30,8 +30,10 @@
 
 extern "C" {
 #include <gpm.h>
-}
+// Kernel 2.6.11 (from Gentoo) seems to need it:
+// Not yet confirmed but doesn't interfere with 2.6.0 headers.
 #include <linux/keyboard.h>
+}
 
 static
 int SetUpGPMConnection()
@@ -86,7 +88,7 @@ void THWMouseGPM::GetEvent(MouseEventType &me)
 {
  Gpm_Event mev;
 
- me.buttons=TEventQueue::curMouse.buttons;
+ me.buttons=TEventQueue::curMouse.buttons & ~(mbButton4 | mbButton5);
  me.doubleClick=False;
  if (!Gpm_Repeat(1) && (Gpm_GetEvent(&mev)==1))
    {
@@ -99,6 +101,11 @@ void THWMouseGPM::GetEvent(MouseEventType &me)
        me.buttons|= mbRightButton;
     else
        me.buttons&= ~mbRightButton;
+    if (mev.wdy<0)
+       me.buttons=mbButton5;
+    else
+       if (mev.wdy>0)
+          me.buttons=mbButton4;
     me.where.x=range(mev.x,0,TScreen::screenWidth-1);
     me.where.y=range(mev.y,0,TScreen::screenHeight-1);
     DrawMouse(me.where.x,me.where.y);

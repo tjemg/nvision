@@ -1,6 +1,6 @@
 /**[txh]********************************************************************
 
-  Copyright 1996-2002 by Salvador Eduardo Tropea (SET)
+  Copyright 1996-2003 by Salvador Eduardo Tropea (SET)
   This file is covered by the GPL license.
 
   Module: TVCodePage
@@ -12,27 +12,30 @@
 
 class TVCodePageCol;
 class TStringCollection;
-
-struct stIntCodePairs {
+struct stIntCodePairs
+{
  uint16 unicode,code;
 };
 
 // This is the internal structure used to describe a code page
-struct CodePage {
- char        Name[28];    // Descriptive name
- int         id;          // Unique ID to identify it
- ushort      Font[128];   // High 128 symbols
+struct CodePage
+{
+ char Name[28];       // Descriptive name
+ int id;              // Unique ID to identify it
+ ushort Font[128];    // High 128 symbols
  const char *UpLow;       // Lowecase/Uppercase pairs
- const char *MoreLetters; // Other symbols that should be treat as letters but doesn't have lowecase/uppercase pair.
- int         LowRemapNum; // Most code pages are plain ASCII in the first 128 symbols
- ushort     *LowRemap;    // and we don't define them. This information is used when symbols under 128 needs special treatment.
+ const char *MoreLetters; // Other symbols that should be treat as letters but doesn't
+                      // have lowecase/uppercase pair.
+ int LowRemapNum;     // Most code pages are plain ASCII in the first 128 symbols
+ ushort *LowRemap;    // and we don't define them. This information is used when
+                      // symbols under 128 needs special treatment.
 };
 
 typedef void (*TVCodePageCallBack)(ushort *map);
 
 const unsigned rbgDontRemapLow32=1, rbgOnlySelected=2;
 
-class TVCodePage
+class CLY_EXPORT TVCodePage
 {
 public:
  TVCodePage(int idApp, int idScr, int idInp);
@@ -59,6 +62,8 @@ public:
   { return (char)toLowerTable[(uchar)val]; }
  static int     isAlpha(char val)
   { return AlphaTable[(uchar)val] & alphaChar; }
+ static int     isNumber(char val)
+  { return AlphaTable[(uchar)val] & digitChar; }
  static int     isAlNum(char val)
   { return AlphaTable[(uchar)val] & (alphaChar | digitChar); }
  static int     isLower(char val)
@@ -85,6 +90,15 @@ public:
  static void    GetDefaultCodePages(int &idScr, int &idApp, int &idInp)
                 { idApp=defAppCP; idScr=defScrCP; idInp=defInpCP; }
  static int     LookSimilarInRange(int code, int last);
+ // TView helpers
+ static void   *convertBufferU16_2_CP(void *dest, const void *orig, unsigned count);
+ static void   *convertBufferCP_2_U16(void *dest, const void *orig, unsigned count);
+ static void   *convertStrU16_2_CP(void *dest, const void *orig, unsigned len);
+ static void   *convertStrCP_2_U16(void *dest, const void *orig, unsigned len);
+ static char    convertU16_2_CP(uint16 val);
+ static uint16  convertCP_2_U16(char val);
+ static char    convertU16_2_InpCP(uint16 val);
+ static uint16  convertInpCP_2_U16(char val);
 
  // Arbitrary names for the supported code pages
  // Just to avoid using the magics, look in codepage.cc for more information
@@ -104,6 +118,11 @@ public:
   ISOIR153=22216718,
   LinuxACM=0x7FFF0000, LinuxSFM=0x7FFF0001
  };
+ // Be careful with this table is public just to simplify the code.
+ static stIntCodePairs      InternalMap[];
+ static stIntCodePairs      InternalMapBrokenLinux[];
+ static const int           providedUnicodes;
+ static const int           providedUnicodesBL;
 
 protected:
  static CodePage *CodePageOfID(int id);
@@ -133,8 +152,10 @@ protected:
  static char   NeedsOnTheFlyInpRemap;
  static uchar  OnTheFlyInpMap[256];
  static TVCodePageCallBack  UserHook;
- static stIntCodePairs      InternalMap[];
- static const int           providedUnicodes;
+ static uint16 appToUnicode[256];
+ static TVPartitionTree556 *unicodeToApp;
+ static uint16 inpToUnicode[256];
+ static TVPartitionTree556 *unicodeToInp;
  // CodePage structures
  static CodePage stPC437;
  static CodePage stPC775;

@@ -11,3 +11,4 @@ all: $(OBJECTS)
 clean:
 	rm -rf *.o
 	rm -rf *.a
+	rm -rf *~

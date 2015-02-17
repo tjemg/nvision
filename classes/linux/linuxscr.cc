@@ -123,7 +123,11 @@ are just broken.
 #include <tv/linux/log.h>
 
 #ifdef h386LowLevel
- #include <asm/io.h>
+ #if HAVE_OUTB_IN_SYS
+  #include <sys/io.h>
+ #else
+  #include <asm/io.h>
+ #endif
 #endif
 
 // What a hell is that?!
@@ -231,13 +235,14 @@ struct stCodePageLang TScreenLinux::langCodePages[]=
 
 // Structure for TIOCLINUX service 2 set selection, very kernel
 // dependent.
-typedef struct {
- char service;
- ushort xs;
- ushort ys;
- ushort xe;
- ushort ye;
- ushort sel_mode;
+typedef struct
+{
+ char service;//    __attribute__((packed));
+ ushort xs       __attribute__((packed));
+ ushort ys       __attribute__((packed));
+ ushort xe       __attribute__((packed));
+ ushort ye       __attribute__((packed));
+ ushort sel_mode __attribute__((packed));
 } setSel;
 
 static uint32 adler32(uint32 adler, const char *buf, unsigned len);
@@ -268,7 +273,6 @@ void TScreenLinux::Init(int mode)
  TScreen::setVideoMode=SetVideoMode;
  TScreen::setVideoModeExt=SetVideoModeExt;
  TScreen::getCharacter=GetCharacter;
- TScreen::setCharacter=SetCharacter;
  TScreen::System_p=System;
  TDisplay::checkForWindowSize=CheckForWindowSize;
  TScreen::getFontGeometry=GetFontGeometry;
@@ -1274,11 +1278,6 @@ ushort TScreenLinux::GetCharacter(unsigned dst)
  return src;
 }
 
-void TScreenLinux::SetCharacter(unsigned offset,ushort value)
-{
- setCharacters(offset,&value,1);
-}
-
 void TScreenLinux::GetCharactersMDA(unsigned offset, ushort *buf, unsigned count)
 {
  memcpy(buf,mdaMem+offset,count*sizeof(ushort));
@@ -1537,14 +1536,19 @@ int TScreenLinux::System(const char *command, pid_t *pidChild, int in,
        dup2(out,STDOUT_FILENO);
     if (err!=-1)
        dup2(err,STDERR_FILENO);
-   
-    argv[0]=getenv("SHELL");
+
+    // Note: execvp takes a char * const argument, but I think it should
+    // take a const char *
+    argv[0]=newStr(getenv("SHELL"));
     if (!argv[0])
-       argv[0]=(char *)"/bin/sh";
-    argv[1]=(char *)"-c";
-    argv[2]=(char *)command;
-    argv[3]=0;
+       argv[0]=newStr("/bin/sh");
+    argv[1]=newStr("-c");
+    argv[2]=newStr(command);
+    argv[3]=NULL;
     execvp(argv[0],argv);
+    delete[] argv[0];
+    delete[] argv[1];
+    delete[] argv[2];
     // We get here only if exec failed
     _exit(127);
    }

@@ -1,5 +1,5 @@
 /* Copyright (C) 1996-1998 Robert H”hne, see COPYING.RH for details */
-/* Copyright (C) 1998-2002 Salvador Eduardo Tropea */
+/* Copyright (C) 1998-2003 Salvador Eduardo Tropea */
 /*
 TODO:
 TurboVision_screenOptions
@@ -20,9 +20,9 @@ Mouse reporting not disabled at exit!!!
 #define Uses_TGKey
 #define Uses_string
 #define Uses_ctype
+#define Uses_ioctl
 #define Uses_TVCodePage
 #define Uses_signal
-#define Uses_ioctl
 #define Uses_stdio
 #define Uses_stdlib
 #include <tv.h>
@@ -534,16 +534,16 @@ void TScreenUNIX::writeBlock(int dst, int len, ushort *old, ushort *src)
              if (code<32 && ((CTRL_ALWAYS>>code) & 1))
                {/* This character can't be printed, we must use unicode */
                 /* Enter UTF-8 and start constructing 0xF000 code */
-                safeput(p,(char *)ENTER_UTF8 "\xEF\x80");
+                safeput(p,ENTER_UTF8 "\xEF\x80");
                 /* Set the last 6 bits */
                 *p++=code | 0x80;
                 /* Escape UTF-8 */
-                safeput(p,(char *)EXIT_UTF8);
+                safeput(p,EXIT_UTF8);
                }
              else if (code==128+27)
                {/* A specially evil code: Meta+ESC, it can't be printed */
                 /* Just send Unicode 0xF09B to screen */
-                safeput(p,(char *)ENTER_UTF8 "\xEF\x82\x9B" EXIT_UTF8);
+                safeput(p,ENTER_UTF8 "\xEF\x82\x9B" EXIT_UTF8);
                }
              else
                 /* The rest pass directly unchanged */
@@ -639,7 +639,6 @@ TScreenUNIX::TScreenUNIX()
   TScreen::setVideoModeExt=setVideoModeExt;
   TScreen::getCharacters=getCharacters;
   TScreen::getCharacter=getCharacter;
-  TScreen::setCharacter=setCharacter;
   TScreen::setCharacters=setCharacters;
   TScreen::System_p=System;
 
@@ -876,11 +875,6 @@ ushort TScreenUNIX::getCharacter(unsigned dst)
  return src;
 }
 
-void TScreenUNIX::setCharacter(unsigned offset,ushort value)
-{
- setCharacters(offset,&value,1);
-}
-
 /*
  * Draws a line of text on the screen.
  */
@@ -994,13 +988,16 @@ int TScreenUNIX::System(const char *command, pid_t *pidChild, int in,
     if (err!=-1)
        dup2(err,STDERR_FILENO);
        
-    argv[0]=getenv("SHELL");
+    argv[0]=newStr(getenv("SHELL"));
     if (!argv[0])
-       argv[0]=(char *)"/bin/sh";
-    argv[1]=(char *)"-c";
-    argv[2]=(char *)command;
-    argv[3]=0;
+       argv[0]=newStr("/bin/sh");
+    argv[1]=newStr("-c");
+    argv[2]=newStr(command);
+    argv[3]=NULL;
     execvp(argv[0],argv);
+    delete[] argv[0];
+    delete[] argv[1];
+    delete[] argv[2];
     // We get here only if exec failed
     _exit(127);
    }

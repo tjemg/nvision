@@ -1,6 +1,6 @@
 /**[txh]********************************************************************
 
-  Copyright 1996-2002 by Salvador Eduardo Tropea (SET)
+  Copyright 1996-2003 by Salvador Eduardo Tropea (SET)
   This file is covered by the GPL license.
 
   Module: TVFontCollection
@@ -28,7 +28,7 @@ struct TVBitmapFontDesc
  TStringCollection *sizes;
 };
 
-class TVBitmapFontDescCol : public TStringCollection
+class CLY_EXPORT TVBitmapFontDescCol : public TStringCollection
 {
 public:
  TVBitmapFontDescCol() : TStringCollection(8,4) {}
@@ -36,7 +36,7 @@ public:
  virtual void *keyOf(void *item);
 };
 
-class TVBitmapFontDescLBox : public TSortedListBox
+class CLY_EXPORT TVBitmapFontDescLBox : public TSortedListBox
 {
 public:
  TVBitmapFontDescLBox(const TRect& bounds, ushort aNumCols,
@@ -51,7 +51,7 @@ struct TVBitmapFontSize
  unsigned w,h;
 };
 
-class TVBitmapFontSizeCol : public TStringCollection
+class CLY_EXPORT TVBitmapFontSizeCol : public TStringCollection
 {
 public:
  TVBitmapFontSizeCol() : TStringCollection(3,3) {}
@@ -60,7 +60,7 @@ public:
  virtual void freeItem(void *item) { delete (TVBitmapFontSize *)item; }
 };
 
-class TVBitmapFontSizeLBox : public TSortedListBox
+class CLY_EXPORT TVBitmapFontSizeLBox : public TSortedListBox
 {
 public:
  TVBitmapFontSizeLBox(const TRect& bounds, ushort aNumCols,
@@ -70,7 +70,7 @@ public:
  virtual void getText(char *dest, ccIndex item, short maxChars);
 };
 
-class TVFontCollection : public TNSCollection
+class CLY_EXPORT TVFontCollection : public TNSCollection
 {
 public:
  TVFontCollection(const char *file, int cp);
@@ -80,6 +80,7 @@ public:
  static void ReduceOne(uchar *dest, uchar *ori, int height, int wBytes, int num=256);
  static void EnlargeOne(uchar *dest, uchar *ori, int height, int wBytes, int num=256);
  uchar *GetFont(int width, int height);
+ uchar *GetFontFull(int width, int height, int &first, int &last);
  void   SetCodePage(int id);
  int    GetError() { return error; }
  const char *GetFileName() { return fileName; }

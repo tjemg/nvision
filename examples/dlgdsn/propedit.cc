@@ -40,6 +40,7 @@
 #define Uses_TInputLine
 #define Uses_TPalette
 #define Uses_TValidator
+#define Uses_TFilterValidator
 
 #include <tv.h>
 
@@ -219,7 +220,8 @@ void TLinkList::removeMe(TDsgObj * aDsgObj)
       this->free(link);
       switch(aDsgObj->viewType)
       {
-         case vtVScroll...vtHScroll:
+         case vtVScroll:
+         case vtHScroll:
             if (ScrollList->search(&data->thisName, index))
             {
                removeNotify(ScrollList, index);
@@ -255,7 +257,8 @@ void TLinkList::add(TView * aView, TDsgObj * aDsgObj)
    TDsgObjData * data = (TDsgObjData *)aDsgObj->attributes;
    switch(aDsgObj->viewType)
    {
-      case vtVScroll...vtHScroll: ScrollList->insert(&data->thisName); break;
+      case vtVScroll:
+      case vtHScroll: ScrollList->insert(&data->thisName); break;
       case vtStatic: break;
       case vtButton: break;
       case vtLabel:
@@ -434,7 +437,7 @@ TLinkList * ObjectLinker() { return ObjLink; }
 TInPlaceEdit::TInPlaceEdit(const TRect& bounds, ushort aMaxLen,
                            TValidator * aValidator):
                            TInputLine(bounds, aMaxLen)
-                           { SetValidator(aValidator); }
+                           { setValidator(aValidator); }
                            
 void TInPlaceEdit::handleEvent(TEvent& event)
 {

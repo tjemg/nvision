@@ -1,5 +1,5 @@
 /* UNIX screen handler routines header.
-   Copyright by Salvador E. Tropea (SET) (2001-2002)
+   Copyright by Salvador E. Tropea (SET) (2001-2003)
    Covered by the GPL license. */
 
 #if defined(HAVE_NCURSES) && defined(TVOS_UNIX) && !defined(TVOSf_QNXRtP) && \
@@ -32,7 +32,7 @@ protected:
  // Not available static int setWindowTitle(const char *name);
 
  // Functions and members specific for this driver
- inline static void safeput(char *&p, char *cap);
+ inline static void safeput(char *&p, const char *cap);
  inline static int  canWriteVCS();
  inline static int  canReadVCS();
  inline static int  canOnlyWriteVCS();
@@ -49,7 +49,7 @@ protected:
 };
 
 inline
-void TDisplayUNIX::safeput(char *&p, char *cap)
+void TDisplayUNIX::safeput(char *&p, const char *cap)
 {
  if (cap)
     while (*cap) *p++=*cap++;
@@ -88,7 +88,7 @@ protected:
  static void   setVideoModeExt(char *mode);
  static void   getCharacters(unsigned offset,ushort *buf,unsigned count);
  static ushort getCharacter(unsigned dst);
- static void   setCharacter(unsigned offset,ushort value);
+ static void   setCharacter(unsigned offset,uint32 value);
  static void   setCharacters(unsigned dst,ushort *src,unsigned len);
  static int    System(const char *command, pid_t *pidChild, int in, int out,
                       int err);

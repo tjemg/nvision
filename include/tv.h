@@ -12,14 +12,15 @@ Modified by Salvador E. Tropea
  *
  */
 
+// SET: We still need to add a lot of TV 2.0 functionality
 #define _TV_VERSION 0x0103
 
 // SET: Internal release number. Used to check the version of the release
 // in programs that are very sensitive, like my editor.
 #define TV_MAJOR_VERSION  2
-#define TV_MIDDLE_VERSION 0
-#define TV_MINOR_VERSION  3
-#define TV_VERSION "2.0.3"
+#define TV_MIDDLE_VERSION 2
+#define TV_MINOR_VERSION  1
+#define TV_VERSION "2.2.1"
 
 #define Uses_EventCodes
 #define Uses_ViewCommands
@@ -117,7 +118,22 @@ Modified by Salvador E. Tropea
 #define Uses_TCollection
 #define Uses_TScroller
 #define Uses_TWindow
+// ssize_t
+#define Uses_sys_types
 #define INCLUDE_FILEVIEW_H
+#endif
+
+#if defined( Uses_TPXPictureValidator )
+#define Uses_TValidator
+#endif
+
+#if defined( Uses_TStringLookupValidator )
+#define Uses_TStringCollection
+#define Uses_TLookupValidator
+#endif
+
+#if defined( Uses_TLookupValidator )
+#define Uses_TValidator
 #endif
 
 #if defined( Uses_TRangeValidator )
@@ -182,6 +198,7 @@ Modified by Salvador E. Tropea
 #if defined( Uses_TTextDevice )
 #define Uses_TScroller
 #define Uses_iostream
+#define Uses_stdio // EOF
 #define INCLUDE_TEXTVIEW_H
 #endif
 

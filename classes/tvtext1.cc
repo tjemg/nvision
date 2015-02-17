@@ -74,6 +74,10 @@ char TFrame::zoomIcon[] = "[~\x18~]";
 char TFrame::ozoomIcon[] = "[~\x18~]";
 char TFrame::unZoomIcon[] = "[~\x12~]";
 char TFrame::ounZoomIcon[] = "[~\x12~]";
+// Note: Eddie proposed 0xF (WHITE SUN WITH RAYS) but this reduces to * and
+// is the same as 0xFE (BLACK SQUARE) (also reduced to *).
+char TFrame::animIcon[] = "[~+~]";
+char TFrame::oanimIcon[] = "[~+~]";
 char TFrame::dragIcon[] = "~ÄÙ~";
 char TFrame::odragIcon[] = "~ÄÙ~";
 
@@ -95,10 +99,10 @@ char TColorSelector::omark = 8;
 char TMonoSelector::button[] = " ( ) ";
 char TMonoSelector::obutton[] = " ( ) ";
 
-char TInputLine::rightArrow = '\x10';
-char TInputLine::orightArrow = '\x10';
-char TInputLine::leftArrow = '\x11';
-char TInputLine::oleftArrow = '\x11';
+char TInputLineBase::rightArrow = '\x10';
+char TInputLineBase::orightArrow = '\x10';
+char TInputLineBase::leftArrow = '\x11';
+char TInputLineBase::oleftArrow = '\x11';
 
 char TStatusLine::hintSeparator[] = "\xB3 "; // ³
 char TStatusLine::ohintSeparator[] = "\xB3 "; // ³

@@ -6,6 +6,7 @@
  *
 
 Modified by Robert H”hne to be used for RHIDE.
+Modified by Salvador E. Tropea for Unicode Copyright (c) 2003.
 
  *
  *
@@ -14,21 +15,13 @@ Modified by Robert H”hne to be used for RHIDE.
 #if defined( Uses_TView ) && !defined( __TView )
 #define __TView
 
-struct write_args
-{
-    void *self;
-    void *target;
-    void *buf;
-    ushort offset;
-};
-
 class TRect;
 struct TEvent;
 class TGroup;
 class TPalette;
 class TCommandSet;
 
-class TView : public TObject
+class CLY_EXPORT TView : public TObject
 #if !defined ( NO_STREAM )
                              , public TStreamable
 #endif // NO_STREAM
@@ -91,6 +84,8 @@ public:
     virtual void getEvent( TEvent& event );
     virtual void handleEvent( TEvent& event );
     virtual void putEvent( TEvent& event );
+    // SET: helper to fill the event and call putEvent
+            void putEvent( ushort what, ushort command, void *infoPtr );
 
     static Boolean commandEnabled( ushort command );
     static void disableCommands( TCommandSet& commands );
@@ -127,12 +122,22 @@ public:
     void putInFrontOf( TView *Target );
     TView *TopView();
 
-    void writeBuf(  short x, short y, short w, short h, const void *b );
-    void writeBuf(  short x, short y, short w, short h, const TDrawBuffer& b );
-    void writeChar( short x, short y, char c, uchar color, short count );
-    void writeLine( short x, short y, short w, short h, const TDrawBuffer& b );
-    void writeLine( short x, short y, short w, short h, const void *b );
-    void writeStr( short x, short y, const char *str, uchar color );
+    // For old code bypassing TDrawBuffer and encoding using 8 bit chars
+    void writeBuf(int x, int y, int w, int h, const void *b);
+    // Best choice because the TDrawBuffer says which format is used
+    void writeBuf(int x, int y, int w, int h, TDrawBufferBase& b);
+    // For new code that want to bypass TDrawBuffer and knows the screen format
+    void writeNativeBuf(int x, int y, int w, int h, const void *Buffer);
+
+    void writeLine(int x, int y, int w, int h, const void *b);
+    void writeLine(int x, int y, int w, int h, TDrawBufferBase& b);
+    void writeNativeLine(int x, int y, int w, int h, const void *b);
+
+    void writeChar(int x, int y, char c, uchar color, int count);
+    void writeCharU16(int x, int y, unsigned c, unsigned color, int count);
+
+    void writeStr(int x, int y, const char *str, uchar color);
+    void writeStrU16(int x, int y, const uint16 *str, unsigned color);
 
     TPoint size;
     ushort options;
@@ -171,7 +176,6 @@ private:
                    uchar mode
                  );
     void change( uchar, TPoint delta, TPoint& p, TPoint& s, int grow=0 );
-    static void writeView( write_args );
 
 #if !defined( NO_STREAM )
     virtual const char *streamableName() const
@@ -202,18 +206,6 @@ inline opstream& operator << ( opstream& os, TView& cl )
     { return os << (TStreamable&)cl; }
 inline opstream& operator << ( opstream& os, TView* cl )
     { return os << (TStreamable *)cl; }
-
-inline void TView::writeBuf( short x, short y, short w, short h,
-                             const TDrawBuffer& b )
-{
-    writeBuf( x, y, w, h, b.data );
-}
-
-inline void TView::writeLine( short x, short y, short w, short h,
-                              const TDrawBuffer& b )
-{
-    writeLine( x, y, w, h, b.data );
-}
 
 #endif  // Uses_TView
 

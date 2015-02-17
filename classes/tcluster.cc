@@ -42,9 +42,13 @@ public:
 
 void TStringCollectionCIntl::freeItem( void* item )
 {
-    stTVIntl *p = (stTVIntl *)item;
-    delete[] p->translation;
-    delete p;
+    if( item )
+       {
+       stTVIntl *p = (stTVIntl *)item;
+       if( p->translation )
+           delete[] p->translation;
+       delete p;
+       }
 }
 
 

@@ -171,7 +171,7 @@ ushort defEditorDialog( int dialog, ... );
 class TRect;
 class TScrollBar;
 class TIndicator;
-class TEvent;
+struct TEvent;
 
 class TEditor : public TView
 {
@@ -315,9 +315,10 @@ inline opstream& operator << ( opstream& os, TEditor* cl )
 #if defined( Uses_TMemo ) && !defined( __TMemo )
 #define __TMemo
 
-class TEvent;
+struct TEvent;
 
-struct TMemoData {
+struct TMemoData
+{
     uint32 length;
     char buffer[65536];
 };
@@ -378,7 +379,7 @@ inline opstream& operator << ( opstream& os, TMemo* cl )
 class TRect;
 class TScrollBar;
 class TIndicator;
-class TEvent;
+struct TEvent;
 
 class TFileEditor : public TEditor
 {

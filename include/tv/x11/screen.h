@@ -1,5 +1,5 @@
 /* X11 screen routines header.
-   Copyright (c) 2001-2003 by Salvador E. Tropea (SET)
+   Copyright (c) 2001-2007 by Salvador E. Tropea (SET)
    Covered by the GPL license. */
 // X headers are needed to include it
 #if (defined(TVOS_UNIX) || defined(TVCompf_Cygwin)) && defined(HAVE_X11) && !defined(X11SCR_HEADER_INCLUDED)
@@ -7,6 +7,7 @@
 
 class TVX11Clipboard;
 class TVX11UpdateThread;
+class TNSCollection;
 
 // virtual to avoid problems with multiple inheritance
 class TDisplayX11 : virtual public TDisplay
@@ -74,8 +75,11 @@ protected:
  // Default: static void   setVideoModeExt(char *mode);
  // Default: static void   getCharacters(unsigned offset,ushort *buf,unsigned count);
  // Default: static ushort getCharacter(unsigned dst);
- static void   setCharacter(unsigned offset, ushort value);
+ static void   setCharacter(unsigned offset, uint32 value);
+ static void   setCharacterU16(unsigned offset, uint32 value);
  static void   setCharacters(unsigned dst, ushort *src, unsigned len);
+ static void   setCharactersU16(unsigned offset, ushort *values, unsigned count);
+ static void   setCharactersX11U16(unsigned offset, ushort *values, unsigned w);
  static int    System(const char *command, pid_t *pidChild, int in, int out, int err);
  static int    setWindowTitle(const char *aName);
  static const char *getWindowTitle(void);
@@ -90,6 +94,10 @@ protected:
  static int    SetCrtModeRes(unsigned w, unsigned h, int fW=-1, int fH=-1);
  static Boolean ShowBusyState(Boolean state);
  static void    Beep();
+ static appHelperHandler OpenHelperApp(AppHelper kind);
+ static Boolean CloseHelperApp(appHelperHandler id);
+ static Boolean SendFileToHelper(appHelperHandler id, const char *file, void *extra);
+ static const char *GetHelperAppError();
  
 protected:
  // Blinking cursor emulation
@@ -102,9 +110,14 @@ protected:
  // Events loop
  static void   ProcessGenericEvents();
  // Internal line update
- static void   writeLine(int x, int y, int w, unsigned char *str, unsigned color);
+ static void   writeLineCP(int x, int y, int w, void *str, unsigned color);
+ static void   writeLineU16(int x, int y, int w, void *str, unsigned color);
+ static void   writeLineX11U16(int x, int y, int w, void *str, unsigned color);
+ static void   (*writeLine)(int x, int y, int w, void *str, unsigned color);
  // Internal rectangle update
- static void   redrawBuf(int x, int y, unsigned w, unsigned off);
+ static void   redrawBufCP(int x, int y, unsigned w, unsigned off);
+ static void   redrawBufU16(int x, int y, unsigned w, unsigned off);
+ static void   (*redrawBuf)(int x, int y, unsigned w, unsigned off);
 
  // Font helpers
  static void   CreateXImageFont(int which, uchar *font, unsigned w, unsigned h);
@@ -117,13 +130,19 @@ protected:
  static void   DoResize(unsigned w, unsigned h);
  inline
  static void   drawChar(GC gc, unsigned x, unsigned y, uchar aChar, uchar aAttr);
+ inline
+ static void   drawCharU16(GC gc, unsigned x, unsigned y, uint16 aChar);
  // Creates the mouse cursors
  static Boolean createCursors();
-
+ // Unicode font helpers
+ inline // Find which glyph represents the unicode value
+ static uint16  unicode2index(uint16 unicode);
+ inline // Ensure the glyph is available as XImage
+ static void    checkUnicodeGlyph(uint16 code);
  // Helper to set the bacground and foreground in one step
  static void    XSetBgFg(uint16 attr);
  static void    XSetBgFgC(uint16 attr);
-
+ 
  // Variables for this driver
  // Foreground and background colors
  static int       fg,bg;
@@ -181,6 +200,15 @@ protected:
  static Cursor busyCursor, leftPtr;
  static char busyCursorMap[];
  static char busyCursorMask[];
+ // For testing purposes should be removed
+ void LoadFontAsUnicode();
+ char *SearchX11Font(const char *foundry, const char *family, int w, int h);
+ char *SearchX11Font(const char *foundry, const char *family);
+ char *SearchX11Font(const char *pattern);
+ // Application Helpers stuff
+ static const char *appHelperNameError[];
+ static int appHelperError;
+ static TNSCollection *appHelperHandlers;
 };
 
 // A small class to encapsulate the cliboard, this is too tied to TScreen

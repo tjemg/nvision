@@ -1,6 +1,6 @@
 /**[txh]********************************************************************
 
-  Copyright 1996-2002 by Salvador Eduardo Tropea (SET)
+  Copyright 1996-2003 by Salvador Eduardo Tropea (SET)
   This file is covered by the GPL license.
 
   Module: Code Page
@@ -83,306 +83,312 @@ That's a good use for the input code page.
 
 // List of supported code pages
 TVCodePageCol *TVCodePage::CodePages=NULL;
-
 // The full description of desired code page
 ushort         TVCodePage::CPTable[257];
-
 // toUpper/Lower and isAlpha tables
 // I initialize it with some defaults in case they are needed before setting a
 // code page, in this case only the ASCII range is really usable. The tables
 // are for PC437.
-uchar          TVCodePage::AlphaTable[256]= { 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-                                              0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-                                              0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-                                              0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x00,0x00,0x00,0x00,0x00,0x00,
-                                              0x00,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,
-                                              0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x00,0x00,0x00,0x00,0x00,
-                                              0x00,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,
-                                              0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x00,0x00,0x00,0x00,0x00,
-                                              0x05,0x03,0x03,0x01,0x03,0x01,0x03,0x03,0x01,0x01,0x01,0x01,0x01,0x01,0x05,0x05,
-                                              0x05,0x03,0x05,0x01,0x03,0x01,0x01,0x01,0x01,0x05,0x05,0x00,0x00,0x00,0x00,0x00,
-                                              0x01,0x01,0x01,0x01,0x03,0x05,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-                                              0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-                                              0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-                                              0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-                                              0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-                                              0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-                                            };
-
-uchar          TVCodePage::toUpperTable[256]= { 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
-                                                0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F,
-                                                0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2A,0x2B,0x2C,0x2D,0x2E,0x2F,
-                                                0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x3A,0x3B,0x3C,0x3D,0x3E,0x3F,
-                                                0x40,0x41,0x42,0x43,0x44,0x45,0x46,0x47,0x48,0x49,0x4A,0x4B,0x4C,0x4D,0x4E,0x4F,
-                                                0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x58,0x59,0x5A,0x5B,0x5C,0x5D,0x5E,0x5F,
-                                                0x60,0x41,0x42,0x43,0x44,0x45,0x46,0x47,0x48,0x49,0x4A,0x4B,0x4C,0x4D,0x4E,0x4F,
-                                                0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x58,0x59,0x5A,0x7B,0x7C,0x7D,0x7E,0x7F,
-                                                0x80,0x9A,0x90,0x83,0x8E,0x85,0x8F,0x80,0x88,0x89,0x8A,0x8B,0x8C,0x8D,0x8E,0x8F,
-                                                0x90,0x92,0x92,0x93,0x99,0x95,0x96,0x97,0x98,0x99,0x9A,0x9B,0x9C,0x9D,0x9E,0x9F,
-                                                0xA0,0xA1,0xA2,0xA3,0xA5,0xA5,0xA6,0xA7,0xA8,0xA9,0xAA,0xAB,0xAC,0xAD,0xAE,0xAF,
-                                                0xB0,0xB1,0xB2,0xB3,0xB4,0xB5,0xB6,0xB7,0xB8,0xB9,0xBA,0xBB,0xBC,0xBD,0xBE,0xBF,
-                                                0xC0,0xC1,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8,0xC9,0xCA,0xCB,0xCC,0xCD,0xCE,0xCF,
-                                                0xD0,0xD1,0xD2,0xD3,0xD4,0xD5,0xD6,0xD7,0xD8,0xD9,0xDA,0xDB,0xDC,0xDD,0xDE,0xDF,
-                                                0xE0,0xE1,0xE2,0xE3,0xE4,0xE5,0xE6,0xE7,0xE8,0xE9,0xEA,0xEB,0xEC,0xED,0xEE,0xEF,
-                                                0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF
-                                              };
-
-uchar          TVCodePage::toLowerTable[256]= { 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
-                                                0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F,
-                                                0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2A,0x2B,0x2C,0x2D,0x2E,0x2F,
-                                                0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x3A,0x3B,0x3C,0x3D,0x3E,0x3F,
-                                                0x40,0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x68,0x69,0x6A,0x6B,0x6C,0x6D,0x6E,0x6F,
-                                                0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7A,0x5B,0x5C,0x5D,0x5E,0x5F,
-                                                0x60,0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x68,0x69,0x6A,0x6B,0x6C,0x6D,0x6E,0x6F,
-                                                0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7A,0x7B,0x7C,0x7D,0x7E,0x7F,
-                                                0x87,0x81,0x82,0x83,0x84,0x85,0x86,0x87,0x88,0x89,0x8A,0x8B,0x8C,0x8D,0x84,0x86,
-                                                0x82,0x91,0x91,0x93,0x94,0x95,0x96,0x97,0x98,0x94,0x81,0x9B,0x9C,0x9D,0x9E,0x9F,
-                                                0xA0,0xA1,0xA2,0xA3,0xA4,0xA4,0xA6,0xA7,0xA8,0xA9,0xAA,0xAB,0xAC,0xAD,0xAE,0xAF,
-                                                0xB0,0xB1,0xB2,0xB3,0xB4,0xB5,0xB6,0xB7,0xB8,0xB9,0xBA,0xBB,0xBC,0xBD,0xBE,0xBF,
-                                                0xC0,0xC1,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8,0xC9,0xCA,0xCB,0xCC,0xCD,0xCE,0xCF,
-                                                0xD0,0xD1,0xD2,0xD3,0xD4,0xD5,0xD6,0xD7,0xD8,0xD9,0xDA,0xDB,0xDC,0xDD,0xDE,0xDF,
-                                                0xE0,0xE1,0xE2,0xE3,0xE4,0xE5,0xE6,0xE7,0xE8,0xE9,0xEA,0xEB,0xEC,0xED,0xEE,0xEF,
-                                                0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF
-                                              };
-
-// Some Linux codepages aren't what they claim to be just to put the frames in a better place.
+uchar          TVCodePage::AlphaTable[256]=
+{
+ 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+ 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+ 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+ 0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x00,0x00,0x00,0x00,0x00,0x00,
+ 0x00,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,
+ 0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x00,0x00,0x00,0x00,0x00,
+ 0x00,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,
+ 0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x00,0x00,0x00,0x00,0x00,
+ 0x05,0x03,0x03,0x01,0x03,0x01,0x03,0x03,0x01,0x01,0x01,0x01,0x01,0x01,0x05,0x05,
+ 0x05,0x03,0x05,0x01,0x03,0x01,0x01,0x01,0x01,0x05,0x05,0x00,0x00,0x00,0x00,0x00,
+ 0x01,0x01,0x01,0x01,0x03,0x05,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+ 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+ 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+ 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+ 0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+ 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+};
+uchar          TVCodePage::toUpperTable[256]=
+{
+ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
+ 0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F,
+ 0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2A,0x2B,0x2C,0x2D,0x2E,0x2F,
+ 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x3A,0x3B,0x3C,0x3D,0x3E,0x3F,
+ 0x40,0x41,0x42,0x43,0x44,0x45,0x46,0x47,0x48,0x49,0x4A,0x4B,0x4C,0x4D,0x4E,0x4F,
+ 0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x58,0x59,0x5A,0x5B,0x5C,0x5D,0x5E,0x5F,
+ 0x60,0x41,0x42,0x43,0x44,0x45,0x46,0x47,0x48,0x49,0x4A,0x4B,0x4C,0x4D,0x4E,0x4F,
+ 0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x58,0x59,0x5A,0x7B,0x7C,0x7D,0x7E,0x7F,
+ 0x80,0x9A,0x90,0x83,0x8E,0x85,0x8F,0x80,0x88,0x89,0x8A,0x8B,0x8C,0x8D,0x8E,0x8F,
+ 0x90,0x92,0x92,0x93,0x99,0x95,0x96,0x97,0x98,0x99,0x9A,0x9B,0x9C,0x9D,0x9E,0x9F,
+ 0xA0,0xA1,0xA2,0xA3,0xA5,0xA5,0xA6,0xA7,0xA8,0xA9,0xAA,0xAB,0xAC,0xAD,0xAE,0xAF,
+ 0xB0,0xB1,0xB2,0xB3,0xB4,0xB5,0xB6,0xB7,0xB8,0xB9,0xBA,0xBB,0xBC,0xBD,0xBE,0xBF,
+ 0xC0,0xC1,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8,0xC9,0xCA,0xCB,0xCC,0xCD,0xCE,0xCF,
+ 0xD0,0xD1,0xD2,0xD3,0xD4,0xD5,0xD6,0xD7,0xD8,0xD9,0xDA,0xDB,0xDC,0xDD,0xDE,0xDF,
+ 0xE0,0xE1,0xE2,0xE3,0xE4,0xE5,0xE6,0xE7,0xE8,0xE9,0xEA,0xEB,0xEC,0xED,0xEE,0xEF,
+ 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF
+};
+uchar          TVCodePage::toLowerTable[256]=
+{
+ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
+ 0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F,
+ 0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2A,0x2B,0x2C,0x2D,0x2E,0x2F,
+ 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x3A,0x3B,0x3C,0x3D,0x3E,0x3F,
+ 0x40,0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x68,0x69,0x6A,0x6B,0x6C,0x6D,0x6E,0x6F,
+ 0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7A,0x5B,0x5C,0x5D,0x5E,0x5F,
+ 0x60,0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x68,0x69,0x6A,0x6B,0x6C,0x6D,0x6E,0x6F,
+ 0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7A,0x7B,0x7C,0x7D,0x7E,0x7F,
+ 0x87,0x81,0x82,0x83,0x84,0x85,0x86,0x87,0x88,0x89,0x8A,0x8B,0x8C,0x8D,0x84,0x86,
+ 0x82,0x91,0x91,0x93,0x94,0x95,0x96,0x97,0x98,0x94,0x81,0x9B,0x9C,0x9D,0x9E,0x9F,
+ 0xA0,0xA1,0xA2,0xA3,0xA4,0xA4,0xA6,0xA7,0xA8,0xA9,0xAA,0xAB,0xAC,0xAD,0xAE,0xAF,
+ 0xB0,0xB1,0xB2,0xB3,0xB4,0xB5,0xB6,0xB7,0xB8,0xB9,0xBA,0xBB,0xBC,0xBD,0xBE,0xBF,
+ 0xC0,0xC1,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8,0xC9,0xCA,0xCB,0xCC,0xCD,0xCE,0xCF,
+ 0xD0,0xD1,0xD2,0xD3,0xD4,0xD5,0xD6,0xD7,0xD8,0xD9,0xDA,0xDB,0xDC,0xDD,0xDE,0xDF,
+ 0xE0,0xE1,0xE2,0xE3,0xE4,0xE5,0xE6,0xE7,0xE8,0xE9,0xEA,0xEB,0xEC,0xED,0xEE,0xEF,
+ 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF
+};
+// Some Linux codepages aren't what they claim to be just to put the frames
+// in a better place.
 uchar          TVCodePage::OnTheFlyMap[256];
 char           TVCodePage::NeedsOnTheFlyRemap=0;
-
 // This is a translation for the codes from keyboard.
 uchar          TVCodePage::OnTheFlyInpMap[256];
 char           TVCodePage::NeedsOnTheFlyInpRemap=0;
-
 // Current code pages
 //  The source code is encoded in CP 437
 int            TVCodePage::curAppCP=437;
-
 //  We assume the screen is also CP 437, if it isn't true the driver will inform it.
 int            TVCodePage::curScrCP=437;
-
 // What we get from the keyboard
 int            TVCodePage::curInpCP=437;
-
 // Default values suggested by the current driver
 int            TVCodePage::defAppCP=437;
 int            TVCodePage::defScrCP=437;
 int            TVCodePage::defInpCP=437;
-
+// Helpers to convert internal buffers
+uint16         TVCodePage::appToUnicode[256];
+TVPartitionTree556
+              *TVCodePage::unicodeToApp=NULL;
+uint16         TVCodePage::inpToUnicode[256];
+TVPartitionTree556
+              *TVCodePage::unicodeToInp=NULL;
 // User provided function to call each time we change the code page.
 // This is called before sending a broadcast.
 void         (*TVCodePage::UserHook)(ushort *map)=NULL;
 // Table used to find something that can represent an absent code.
 // This is for CP 437 use
-uchar          TVCodePage::Similar[]= {  ' ',  '@',  '@',  '*',  '*',  '*',  '*',  '*', //   0-  7
-                                        0x04,  'o', 0xDB,  'M',  'F',  'd',  'd',  '*', //   8- 15
-                                        0x1A, 0x1B,  'I', 0xBA,  'P',  'S', 0xDC, 0x12, //  16- 23
-                                         '^',  'V',  '>',  '<', 0xC0,  '-', 0x18, 0x19, //  24- 31
-                                         ' ',  '!',  '"',  '#',  '$',  '%',  '&', '\'', //  32- 39
-                                         '(',  ')',  '*',  '+',  ',',  '-',  '.',  '/', //  40- 47
-                                         '0',  '1',  '2',  '3',  '4',  '5',  '6',  '7', //  48- 55
-                                         '8',  '9',  ':',  ';',  '<',  '=',  '>',  '?', //  56- 63
-                                         '@',  'A',  'B',  'C',  'D',  'E',  'F',  'G', //  64- 71
-                                         'H',  'I',  'J',  'K',  'L',  'M',  'N',  'O', //  72- 79
-                                         'P',  'Q',  'R',  'S',  'T',  'U',  'V',  'W', //  80- 87
-                                         'X',  'Y',  'Z',  '[', '\\',  ']',  '^',  '_', //  88- 95
-                                         '`',  'a',  'b',  'c',  'd',  'e',  'f',  'g', //  96-103
-                                         'h',  'i',  'j',  'k',  'l',  'm',  'n',  'o', // 104-111
-                                         'p',  'q',  'r',  's',  't',  'u',  'v',  'w', // 112-119
-                                         'x',  'y',  'z',  '{',  '|',  '}',  '~',  '^', // 120-127
-                                         'C',  'u',  'e',  'a',  'a',  'a',  'a',  'c', // 128-135
-                                         'e',  'e',  'e',  'i',  'i',  'i',  'A',  'A', // 136-143
-                                         'E',  'a',  'A',  'o',  'o',  'o',  'u',  'u', // 144-151
-                                         'y',  'O',  'U',  'c',  'L',  'Y',  'P',  'f', // 152-159
-                                         'a',  'i',  'o',  'u',  'n',  'N',  'a',  'o', // 160-167
-                                         '?', 0xDA, 0xBF,  '*',  '*',  '!',  '<',  '>', // 168-175
-                                         ' ',  ' ',  ' ',  '|', 0xB3, 0xB3, 0xBA, 0xBF, // 176-183
-                                        0xBF, 0xBA, 0xB3, 0xBF, 0xD9, 0xD9, 0xD9,  '*', // 184-191
-                                         '*', 0xC4, 0xC4, 0xB3,  '-',  '+', 0xB3, 0xBA, // 192-199
-                                        0xC0, 0xDA, 0xCD, 0xCD, 0xBA, 0xC4, 0xBA, 0xCD, // 200-207
-                                        0xC4, 0xCD, 0xC4, 0xC0, 0xC0, 0xDA, 0xDA, 0xC5, // 208-215
-                                        0xC5,  '*',  '*',  ' ',  ' ',  ' ',  ' ',  ' ', // 216-223
-                                         'a',  'B',  'G',  'p',  'S',  's',  'm',  't', // 224-231
-                                         'F',  'f',  'O',  'd',  'i',  'o',  'e',  'U', // 232-239
-                                         '=',  '+',  '>',  '<', 0xDA, 0xD9,  '/',  '~', // 240-247
-                                         'o',  '.',  '.',  'V',  'n',  '2',  '*',  ' ', // 248-255
-                                        };
-
+uchar          TVCodePage::Similar[]=
+{
+  ' ', '@', '@', '*', '*', '*', '*', '*', //   0-  7
+ 0x04, 'o',0xDB, 'M', 'F', 'd', 'd', '*', //   8- 15
+ 0x1A,0x1B, 'I',0xBA, 'P', 'S',0xDC,0x12, //  16- 23
+  '^', 'V', '>', '<',0xC0, '-',0x18,0x19, //  24- 31
+  ' ', '!', '"', '#', '$', '%', '&','\'', //  32- 39
+  '(', ')', '*', '+', ',', '-', '.', '/', //  40- 47
+  '0', '1', '2', '3', '4', '5', '6', '7', //  48- 55
+  '8', '9', ':', ';', '<', '=', '>', '?', //  56- 63
+  '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G', //  64- 71
+  'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', //  72- 79
+  'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', //  80- 87
+  'X', 'Y', 'Z', '[','\\', ']', '^', '_', //  88- 95
+  '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', //  96-103
+  'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', // 104-111
+  'p', 'q', 'r', 's', 't', 'u', 'v', 'w', // 112-119
+  'x', 'y', 'z', '{', '|', '}', '~', '^', // 120-127
+  'C', 'u', 'e', 'a', 'a', 'a', 'a', 'c', // 128-135
+  'e', 'e', 'e', 'i', 'i', 'i', 'A', 'A', // 136-143
+  'E', 'a', 'A', 'o', 'o', 'o', 'u', 'u', // 144-151
+  'y', 'O', 'U', 'c', 'L', 'Y', 'P', 'f', // 152-159
+  'a', 'i', 'o', 'u', 'n', 'N', 'a', 'o', // 160-167
+  '?',0xDA,0xBF, '*', '*', '!', '<', '>', // 168-175
+  ' ', ' ', ' ', '|',0xB3,0xB3,0xBA,0xBF, // 176-183
+ 0xBF,0xBA,0xB3,0xBF,0xD9,0xD9,0xD9, '*', // 184-191
+  '*',0xC4,0xC4,0xB3, '-', '+',0xB3,0xBA, // 192-199
+ 0xC0,0xDA,0xCD,0xCD,0xBA,0xC4,0xBA,0xCD, // 200-207
+ 0xC4,0xCD,0xC4,0xC0,0xC0,0xDA,0xDA,0xC5, // 208-215
+ 0xC5, '*', '*', ' ', ' ', ' ', ' ', ' ', // 216-223
+  'a', 'B', 'G', 'p', 'S', 's', 'm', 't', // 224-231
+  'F', 'f', 'O', 'd', 'i', 'o', 'e', 'U', // 232-239
+  '=', '+', '>', '<',0xDA,0xD9, '/', '~', // 240-247
+  'o', '.', '.', 'V', 'n', '2', '*', ' ', // 248-255
+};
 // This table is used to reduce any of our codes into a similar one when absent.
 // It covers all the known symbols not covered by Similar and if the value doesn't
 // exist in the current code page you must enter in the table again until you get
 // an ASCII value.
-ushort         TVCodePage::Similar2[]= { 'c','l','n','r','s','y','z',                          // 0x100-0x106 small acute
-                                          'A','C','I','L','N','O','R','S','U','Y','Z',         // 0x107-0x111 capital acute
-                                          'U',                                                 // 0x112 double acute
-                                          'A','E','I','O','U',                                 // 0x113-0x117 capital grave
-                                          'E','I',                                             // 0x118-0x119 capital diaeresis
-                                          'U','u',                                             // 0x11A-0x11B ring above
-                                          'a','o','u','A','O',                                 // 0x11C-0x120 tilde/double acute
-                                          'A','E','I','O','U',                                 // 0x121-0x125 capital circumflex
-                                          'c','n','r','s','z','C','D','E','N','R','S','T','Z', // 0x126-0x132 caron
-                                          's','t','S','T',                                     // 0x133-0x136 cedilla
-                                          'a','e','A','E',                                     // 0x137-0x13A ogonek
-                                          'z','Z',                                             // 0x13B-013C dot above
-                                          'l','o','L','O','d',                                 // 0x13D-0x141 stroke
-                                          0x141,                                               // 0x142 latin small letter eth
-                                          'D',                                                 // 0x143 stroke
-                                          'd','l','t','L',                                     // 0x144-0x147 caron
-                                          'a','e','A',                                         // 0x14-0x14A breve
-                                          '$',                                                 // 0x14B currency sign (o four feets), I guess that's a good fall back
-                                                                                               // specially thinking all people understand $ as money
-                                          'P','p',                                             // 0x14C-0x14D thorn (Icelandic) sorry I know that's arbitrary and
-                                                                                               // silly. Anyone have a better choice?
-                                          '*',                                                 // 14E multiplication sign
-                                          'R',                                                 // 14F registered sign (R)
-                                          'c',                                                 // 150 copyright sign (c)
-                                          'i',                                                 // 151  latin small letter dotless i
-                                          '|',                                                 // 152  broken bar (|)
-                                          '_',                                                 // 153  macron (_ but high)
-                                          '\'',                                                // 154  acute accent
-                                          '-',                                                 // 155  soft hyphen (- long)
-                                          '_',                                                 // 156  double low line (_ double)
-                                          '3',                                                 // 157  vulgar fraction three quarters
-                                          ',',                                                 // 158  cedilla
-                                          '"',                                                 // 159  diaeresis (diÇresis, umlaut)
-                                          '1',                                                 // 15a  superscript one
-                                          '3',                                                 // 15b  superscript three
-                                          '"',                                                 // 15c  double acute accent
-                                          ';',                                                 // 15d  ogonek (cedilla inv.)
-                                          '<',                                                 // 15e  caron (mandarin chinese third tone)
-                                          '(',                                                 // 15f  breve
-                                          '.',                                                 // 160  dot above (mandarin chinese light tone)
-                                          'o','O',                                             // 0x161-0x162 double acute
-                                          0x145,0x147,0x146,'e',0x144,                         // 0x163-0x167 caron, fall back to the other representation
-                                                                                               // 0x168
-                                          'A','B','G','D','Z','I','J','L','P','U','F','C','C','S','S','"','Y','"',
-                                          'E','U','A',                                         // 0x168-0x17C Cyrillic capitals group 1
-                                          'b','v','g','d','z','z','i','j','k','l','m','n','p','t','u','f','c','c',
-                                          's','s','\'','y','\'','e','u','a',                   // 0x17D-0x196 Cyrillic smalls group 1
-                                          'I','i',                                             // 0x197-0x198 ukrainian ie
-                                          'Z',                                                 // 0x199 capital letter ze
-                                          ' ',                                                 // 0x19A free slot
-                                          'N',                                                 // 0x19B number
-                                                                                               // ISO-5 cyrillics:
-                                          'D',                                                 // 19C capital letter dje (Serbocroatian) (¢)-5
-                                          'd',                                                 // 19D small letter dje (Serbocroatian) (Ú)-5
-                                          'G',                                                 // 19E capital letter gje (£)-5
-                                          'g',                                                 // 19F small letter gje (Û)-5
-                                          'Y',                                                 // 1A0 capital letter yi (Ukrainian) (¶)-5
-                                          'L',                                                 // 1A1 capital letter lje (©)-5
-                                          'l',                                                 // 1A2 small letter lje (˘)-5
-                                          'N',                                                 // 1A3 capital letter nje (™)-5
-                                          'n',                                                 // 1A4 small letter nje (˙)-5
-                                          'T',                                                 // 1A5 capital letter tshe (Serbocroatian) (´)-5
-                                          't',                                                 // 1A6 small letter tshe (Serbocroatian) (˚)-5
-                                          'K',                                                 // 1A7 capital letter kje (¨)-5
-                                          'k',                                                 // 1A8 small letter kje (¸)-5
-                                          'V',                                                 // 1A9 capital letter short U (Byelorussian) (Æ)-5
-                                          'v',                                                 // 1AA small letter short U (Byelorussian) (˛)-5
-                                          'D',                                                 // 1AB capital letter dzhe (Ø)-5
-                                          'd',                                                 // 1AC small letter dzhe (ˇ)-5
-                                                                                               // Windows CP 1251 (russian)
-                                          '"',                                                 // 1AD double low-9 quotation mark (Ñ)-cp1251
-                                          '.',                                                 // 1AE horizontal ellipsis         (Ö)-cp1251
-                                          '|',                                                 // 1AF dagger                      (Ü)-cp1251
-                                          '|',                                                 // 1B0 double dagger               (á)-cp1251
-                                          '%',                                                 // 1B1 per mille sign              (â)-cp1251
-                                          '"',                                                 // 1B2 left double quotation mark  (ì)-cp1251
-                                          '"',                                                 // 1B3 right double quotation mark (î)-cp1251
-                                          'T',                                                 // 1B4 trade mark sign             (ô)-cp1251
-                                          0x16A,                                               // 1B5 cyrillic capital letter ghe with upturn, default to GHE (•)-cp1251
-                                          0x17F,                                               // 1B6 cyrillic small letter ghe with upturn, default to ghe   (¥)-cp1251
-                                          '?',                                                 // 1B7 That's a ? inside a circle, it means the character is unknown
-                                          'O',                                                 // 1B8 latin capital ligature OE
-                                          'o',                                                 // 1B9 latin small ligature oe
-                                                                                               // Idiot ISO-1 font found in Linux, only to break standards and annoy people
-                                          't',                                                 // 1BA  symbol for horizontal tabulation
-                                          'f',                                                 // 1BB  symbol for form feed
-                                          'c',                                                 // 1BC  symbol for carriage return
-                                          'l',                                                 // 1BD  symbol for line feed
-                                          'n',                                                 // 1BE  symbol for newline
-                                          'v',                                                 // 1BF  symbol for vertical tabulation
-                                          '#',                                                 // 1C0  not equal to
-                                          'v',                                                 // 1C1  downwards arrow with corner leftwards
-                                          'Y',                                                 // 1C2  latin capital letter y with diaeresis
-                                          ' ',                                                 // 1C3  free
-                                          0xB3,                                                // 1C4  box drawings light up (Å)-1 linux
-                                          0xC4,                                                // 1C5  box drawings light right (Ç)-1 linux
-                                          0xB3,                                                // 1C6  box drawings light down (Ñ)-1 linux
-                                          0xC4,                                                // 1C7  box drawings light left (à)-1 linux
-                                          ' ',                                                 // 1C8  free
-                                          0xBA,                                                // 1C9  box drawings heavy up (ë)-1 linux
-                                          0xCD,                                                // 1CA  box drawings heavy right (í)-1 linux
-                                          0xBA,                                                // 1CB  box drawings heavy down (î)-1 linux
-                                          0xCD,                                                // 1CC  box drawings heavy left (ò)-1 linux
-                                          0x1A8,                                               //1CD  latin small letter kra
-                                          'N','n',                                             // Latin letter eng
-                                                                                               // Circumflex 1D0-1DD
-                                          'C','c','G','g','H','h','J','j','S','s','W','w','Y','y',
-                                                                                               // Dot above 1DE-1EF
-                                          'B','b','C','c','D','d','F','f','g','I','M','m','P','p','S','s','T','t',
-                                                                                               // Macron 1F0-1F7
-                                          'E','e','I','i','O','o','U','u',
-                                                                                               // Breve 1F8-1FD
-                                          'G','g','I','i','U','u',
-                                                                                               // Cedilla 1FE-205
-                                          'G','g','K','k','N','n','R','r',
-                                                                                               // Tilde 206-209
-                                          'I','i','U','u',
-                                                                                               // Ogonek 20A-20F
-                                          'I','i','U','u','W','w',
-                                          'Y',                                                 // 210   0x1EF2 LATIN CAPITAL LETTER Y WITH GRAVE
-                                          'y',                                                 // 211   0x1EF3 LATIN SMALL LETTER Y WITH GRAVE
-                                          'W',                                                 // 212   0x1E82 LATIN CAPITAL LETTER W WITH ACUTE
-                                          'w',                                                 // 213   0x1E83 LATIN SMALL LETTER W WITH ACUTE
-                                          'W',                                                 // 214   0x1E84 LATIN CAPITAL LETTER W WITH DIAERESIS
-                                          'w',                                                 // 215   0x1E85 LATIN SMALL LETTER W WITH DIAERESIS
-                                          'H',                                                 // 216   0x0126 LATIN CAPITAL LETTER H WITH STROKE
-                                          'h',                                                 // 217   0x0127 LATIN SMALL LETTER H WITH STROKE
-                                          'T',                                                 // 218   0x0166 LATIN CAPITAL LETTER T WITH STROKE
-                                          't',                                                 // 219   0x0167 LATIN SMALL LETTER T WITH STROKE
-                                          'O',                                                 // 21A   0x01A0 LATIN CAPITAL LETTER O WITH HORN
-                                          'o',                                                 // 21B   0x01A1 LATIN SMALL LETTER O WITH HORN
-                                          'U',                                                 // 21C   0x01AF LATIN CAPITAL LETTER U WITH HORN
-                                          'u',                                                 // 21D   0x01B0 LATIN SMALL LETTER U WITH HORN
-                                          'E',                                                 // 21E   0x0116 LATIN CAPITAL LETTER E WITH DOT ABOVE
-                                          'e',                                                 // 21F   0x0117 LATIN SMALL LETTER E WITH DOT ABOVE
-                                          'L',                                                 // 220   0x013B LATIN CAPITAL LETTER L WITH CEDILLA
-                                          'l',                                                 // 221   0x013C LATIN SMALL LETTER L WITH CEDILLA
-                                                                                               // Greek smalls 222-22F
-                                          'g','z','h','u','i','l','n','j','r','s','y','x','c','v',
-                                                                                               // Greek capitals 230-233
-                                          'D','J','P','C',
-                                                                                               // Greek accented
-                                          0x159,                                               // 234   0x0385 GREEK DIALYTIKA TONOS => diaeresis
-                                          0xE0,                                                // 235   0x03AC GREEK SMALL LETTER ALPHA WITH TONOS => alpha
-                                          0xEE,                                                // 236   0x03AD GREEK SMALL LETTER EPSILON WITH TONOS => epsilon
-                                          0x224,                                               // 237   0x03AE GREEK SMALL LETTER ETA WITH TONOS => eta
-                                          0x226,                                               // 238   0x03AF GREEK SMALL LETTER IOTA WITH TONOS => iota
-                                          'o',                                                 // 239   0x03CC GREEK SMALL LETTER OMICRON WITH TONOS => omicron
-                                          0x22C,                                               // 23A   0x03CD GREEK SMALL LETTER UPSILON WITH TONOS => upsilon
-                                          0x22F,                                               // 23B   0x03CE GREEK SMALL LETTER OMEGA WITH TONOS => omega
-                                          'A',                                                 // 23C   0x0386 GREEK CAPITAL LETTER ALPHA WITH TONOS
-                                          'E',                                                 // 23D   0x0388 GREEK CAPITAL LETTER EPSILON WITH TONOS
-                                          'H',                                                 // 23E   0x0389 GREEK CAPITAL LETTER ETA WITH TONOS
-                                          'I',                                                 // 23F   0x038A GREEK CAPITAL LETTER IOTA WITH TONOS
-                                          'O',                                                 // 240   0x038C GREEK CAPITAL LETTER OMICRON WITH TONOS
-                                          'Y',                                                 // 241   0x038E GREEK CAPITAL LETTER UPSILON WITH TONOS
-                                          0xEA,                                                // 242   0x038F GREEK CAPITAL LETTER OMEGA WITH TONOS => omega
-                                          0x226,                                               // 243   0x03CA GREEK SMALL LETTER IOTA WITH DIALYTIKA => iota
-                                          0x22C,                                               // 244   0x03CB GREEK SMALL LETTER UPSILON WITH DIALYTIKA => upsilon
-                                          0x238,                                               // 245   0x0390 GREEK SMALL LETTER IOTA WITH DIALYTIKA AND TONOS => iota + tonos
-                                          0x23A,                                               // 246   0x03B0 GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND TONOS => upsilon + tonos
-                                          'L',                                                 // 247   <U039B> GREEK CAPITAL LETTER LAMDA
-                                          'a','A',                                             // 248/9   <U0101/0> LATIN LETTER A WITH MACRON
-                                          'G',                                                 //  24A   <U0120> LATIN CAPITAL LETTER G WITH DOT ABOVE
-                                          'E',                                                 //  24B   <U20AC> Euro Sign
-                                                                                               // Cyrillics that are identical to latin letters
-                                          'B','E','K','M','H','O','P','C','T','X','a','e','o','p','c','x',
-                                          137,280,'s','i',139,'j',281,'J','S',
-                                                                                               // Greeks that are identical to latin letters
-                                          0xE1,0x185,0xE6,'o','A','B','E','Z','H','I','K','M','N','O','P','T','Y','X',
-                                          0x119,0x1C2,
-                                         };
+ushort         TVCodePage::Similar2[]=
+{
+ 'c','l','n','r','s','y','z', // 0x100-0x106 small acute
+ 'A','C','I','L','N','O','R','S','U','Y','Z', // 0x107-0x111 capital acute
+ 'U', // 0x112 double acute
+ 'A','E','I','O','U', // 0x113-0x117 capital grave
+ 'E','I', // 0x118-0x119 capital diaeresis
+ 'U','u', // 0x11A-0x11B ring above
+ 'a','o','u','A','O', // 0x11C-0x120 tilde/double acute
+ 'A','E','I','O','U', // 0x121-0x125 capital circumflex
+ 'c','n','r','s','z','C','D','E','N','R','S','T','Z', // 0x126-0x132 caron
+ 's','t','S','T', // 0x133-0x136 cedilla
+ 'a','e','A','E', // 0x137-0x13A ogonek
+ 'z','Z', // 0x13B-013C dot above
+ 'l','o','L','O','d', // 0x13D-0x141 stroke
+ 0x141, // 0x142 latin small letter eth
+ 'D', // 0x143 stroke
+ 'd','l','t','L', // 0x144-0x147 caron
+ 'a','e','A', // 0x14-0x14A breve
+ '$', // 0x14B currency sign (o four feets), I guess that's a good fall back
+      // specially thinking all people understand $ as money
+ 'P','p', // 0x14C-0x14D thorn (Icelandic) sorry I know that's arbitrary and
+          // silly. Anyone have a better choice?
+ '*', // 14E multiplication sign
+ 'R', // 14F registered sign (R)
+ 'c', // 150 copyright sign (c)
+ 'i', // 151  latin small letter dotless i
+ '|', // 152  broken bar (|)
+ '_', // 153  macron (_ but high)
+ '\'',// 154  acute accent
+ '-', // 155  soft hyphen (- long)
+ '_', // 156  double low line (_ double)
+ '3', // 157  vulgar fraction three quarters
+ ',', // 158  cedilla
+ '"', // 159  diaeresis (diÇresis, umlaut)
+ '1', // 15a  superscript one
+ '3', // 15b  superscript three
+ '"', // 15c  double acute accent
+ ';', // 15d  ogonek (cedilla inv.)
+ '<', // 15e  caron (mandarin chinese third tone)
+ '(', // 15f  breve
+ '.', // 160  dot above (mandarin chinese light tone)
+ 'o','O', // 0x161-0x162 double acute
+ 0x145,0x147,0x146,'e',0x144, // 0x163-0x167 caron, fall back to the other representation
+ // 0x168
+ 'A','B','G','D','Z','I','J','L','P','U','F','C','C','S','S','"','Y','"',
+ 'E','U','A', // 0x168-0x17C Cyrillic capitals group 1
+ 'b','v','g','d','z','z','i','j','k','l','m','n','p','t','u','f','c','c',
+ 's','s','\'','y','\'','e','u','a', // 0x17D-0x196 Cyrillic smalls group 1
+ 'I','i', // 0x197-0x198 ukrainian ie
+ 'Z', // 0x199 capital letter ze
+ ' ', // 0x19A free slot
+ 'N', // 0x19B number
+ // ISO-5 cyrillics:
+ 'D', // 19C capital letter dje (Serbocroatian) (¢)-5
+ 'd', // 19D small letter dje (Serbocroatian) (Ú)-5
+ 'G', // 19E capital letter gje (£)-5
+ 'g', // 19F small letter gje (Û)-5
+ 'Y', // 1A0 capital letter yi (Ukrainian) (¶)-5
+ 'L', // 1A1 capital letter lje (©)-5
+ 'l', // 1A2 small letter lje (˘)-5
+ 'N', // 1A3 capital letter nje (™)-5
+ 'n', // 1A4 small letter nje (˙)-5
+ 'T', // 1A5 capital letter tshe (Serbocroatian) (´)-5
+ 't', // 1A6 small letter tshe (Serbocroatian) (˚)-5
+ 'K', // 1A7 capital letter kje (¨)-5
+ 'k', // 1A8 small letter kje (¸)-5
+ 'V', // 1A9 capital letter short U (Byelorussian) (Æ)-5
+ 'v', // 1AA small letter short U (Byelorussian) (˛)-5
+ 'D', // 1AB capital letter dzhe (Ø)-5
+ 'd', // 1AC small letter dzhe (ˇ)-5
+ // Windows CP 1251 (russian)
+ '"', // 1AD double low-9 quotation mark (Ñ)-cp1251
+ '.', // 1AE horizontal ellipsis         (Ö)-cp1251
+ '|', // 1AF dagger                      (Ü)-cp1251
+ '|', // 1B0 double dagger               (á)-cp1251
+ '%', // 1B1 per mille sign              (â)-cp1251
+ '"', // 1B2 left double quotation mark  (ì)-cp1251
+ '"', // 1B3 right double quotation mark (î)-cp1251
+ 'T', // 1B4 trade mark sign             (ô)-cp1251
+ 0x16A, // 1B5 cyrillic capital letter ghe with upturn, default to GHE (•)-cp1251
+ 0x17F, // 1B6 cyrillic small letter ghe with upturn, default to ghe   (¥)-cp1251
+ '?',   // 1B7 That's a ? inside a circle, it means the character is unknown
+ 'O', // 1B8 latin capital ligature OE
+ 'o', // 1B9 latin small ligature oe
+ // Idiot ISO-1 font found in Linux, only to break standards and annoy people
+ 't', // 1BA  symbol for horizontal tabulation
+ 'f', // 1BB  symbol for form feed
+ 'c', // 1BC  symbol for carriage return
+ 'l', // 1BD  symbol for line feed
+ 'n', // 1BE  symbol for newline
+ 'v', // 1BF  symbol for vertical tabulation
+ '#', // 1C0  not equal to
+ 'v', // 1C1  downwards arrow with corner leftwards
+ 'Y', // 1C2  latin capital letter y with diaeresis
+ ' ', // 1C3  free
+ 0xB3,// 1C4  box drawings light up (Å)-1 linux
+ 0xC4,// 1C5  box drawings light right (Ç)-1 linux
+ 0xB3,// 1C6  box drawings light down (Ñ)-1 linux
+ 0xC4,// 1C7  box drawings light left (à)-1 linux
+ ' ', // 1C8  free
+ 0xBA,// 1C9  box drawings heavy up (ë)-1 linux
+ 0xCD,// 1CA  box drawings heavy right (í)-1 linux
+ 0xBA,// 1CB  box drawings heavy down (î)-1 linux
+ 0xCD,// 1CC  box drawings heavy left (ò)-1 linux
+ 0x1A8,//1CD  latin small letter kra
+ 'N','n', // Latin letter eng
+ // Circumflex 1D0-1DD
+ 'C','c','G','g','H','h','J','j','S','s','W','w','Y','y',
+ // Dot above 1DE-1EF
+ 'B','b','C','c','D','d','F','f','g','I','M','m','P','p','S','s','T','t',
+ // Macron 1F0-1F7
+ 'E','e','I','i','O','o','U','u',
+ // Breve 1F8-1FD
+ 'G','g','I','i','U','u',
+ // Cedilla 1FE-205
+ 'G','g','K','k','N','n','R','r',
+ // Tilde 206-209
+ 'I','i','U','u',
+ // Ogonek 20A-20F
+ 'I','i','U','u','W','w',
+ 'Y',// 210   0x1EF2 LATIN CAPITAL LETTER Y WITH GRAVE
+ 'y',// 211   0x1EF3 LATIN SMALL LETTER Y WITH GRAVE
+ 'W',// 212   0x1E82 LATIN CAPITAL LETTER W WITH ACUTE
+ 'w',// 213   0x1E83 LATIN SMALL LETTER W WITH ACUTE
+ 'W',// 214   0x1E84 LATIN CAPITAL LETTER W WITH DIAERESIS
+ 'w',// 215   0x1E85 LATIN SMALL LETTER W WITH DIAERESIS
+ 'H',// 216   0x0126 LATIN CAPITAL LETTER H WITH STROKE
+ 'h',// 217   0x0127 LATIN SMALL LETTER H WITH STROKE
+ 'T',// 218   0x0166 LATIN CAPITAL LETTER T WITH STROKE
+ 't',// 219   0x0167 LATIN SMALL LETTER T WITH STROKE
+ 'O',// 21A   0x01A0 LATIN CAPITAL LETTER O WITH HORN
+ 'o',// 21B   0x01A1 LATIN SMALL LETTER O WITH HORN
+ 'U',// 21C   0x01AF LATIN CAPITAL LETTER U WITH HORN
+ 'u',// 21D   0x01B0 LATIN SMALL LETTER U WITH HORN
+ 'E',// 21E   0x0116 LATIN CAPITAL LETTER E WITH DOT ABOVE
+ 'e',// 21F   0x0117 LATIN SMALL LETTER E WITH DOT ABOVE
+ 'L',// 220   0x013B LATIN CAPITAL LETTER L WITH CEDILLA
+ 'l',// 221   0x013C LATIN SMALL LETTER L WITH CEDILLA
+ // Greek smalls 222-22F
+ 'g','z','h','u','i','l','n','j','r','s','y','x','c','v',
+ // Greek capitals 230-233
+ 'D','J','P','C',
+ // Greek accented
+ 0x159,// 234   0x0385 GREEK DIALYTIKA TONOS => diaeresis
+ 0xE0, // 235   0x03AC GREEK SMALL LETTER ALPHA WITH TONOS => alpha
+ 0xEE, // 236   0x03AD GREEK SMALL LETTER EPSILON WITH TONOS => epsilon
+ 0x224,// 237   0x03AE GREEK SMALL LETTER ETA WITH TONOS => eta
+ 0x226,// 238   0x03AF GREEK SMALL LETTER IOTA WITH TONOS => iota
+ 'o',  // 239   0x03CC GREEK SMALL LETTER OMICRON WITH TONOS => omicron
+ 0x22C,// 23A   0x03CD GREEK SMALL LETTER UPSILON WITH TONOS => upsilon
+ 0x22F,// 23B   0x03CE GREEK SMALL LETTER OMEGA WITH TONOS => omega
+ 'A',  // 23C   0x0386 GREEK CAPITAL LETTER ALPHA WITH TONOS
+ 'E',  // 23D   0x0388 GREEK CAPITAL LETTER EPSILON WITH TONOS
+ 'H',  // 23E   0x0389 GREEK CAPITAL LETTER ETA WITH TONOS
+ 'I',  // 23F   0x038A GREEK CAPITAL LETTER IOTA WITH TONOS
+ 'O',  // 240   0x038C GREEK CAPITAL LETTER OMICRON WITH TONOS
+ 'Y',  // 241   0x038E GREEK CAPITAL LETTER UPSILON WITH TONOS
+ 0xEA, // 242   0x038F GREEK CAPITAL LETTER OMEGA WITH TONOS => omega
+ 0x226,// 243   0x03CA GREEK SMALL LETTER IOTA WITH DIALYTIKA => iota
+ 0x22C,// 244   0x03CB GREEK SMALL LETTER UPSILON WITH DIALYTIKA => upsilon
+ 0x238,// 245   0x0390 GREEK SMALL LETTER IOTA WITH DIALYTIKA AND TONOS => iota + tonos
+ 0x23A,// 246   0x03B0 GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND TONOS => upsilon + tonos
+ 'L',  // 247   <U039B> GREEK CAPITAL LETTER LAMDA
+ 'a','A',  // 248/9   <U0101/0> LATIN LETTER A WITH MACRON
+ 'G', //  24A   <U0120> LATIN CAPITAL LETTER G WITH DOT ABOVE
+ 'E', //  24B   <U20AC> Euro Sign
+ // Cyrillics that are identical to latin letters
+ 'B','E','K','M','H','O','P','C','T','X','a','e','o','p','c','x',
+ 137,280,'s','i',139,'j',281,'J','S',
+ // Greeks that are identical to latin letters
+ 0xE1,0x185,0xE6,'o','A','B','E','Z','H','I','K','M','N','O','P','T','Y','X',
+ 0x119,0x1C2,
+};
 
 
 // We use an internal code. This is currently a 16 bits code.
@@ -390,314 +396,334 @@ ushort         TVCodePage::Similar2[]= { 'c','l','n','r','s','y','z',           
 const unsigned maxSymbolDefined=632+1;
 
 // Helper to sort Unicode tables or search in sorted Unicode tables
-static int compare(const void *v1, const void *v2) {
-    stIntCodePairs *p1=(stIntCodePairs *)v1;
-    stIntCodePairs *p2=(stIntCodePairs *)v2;
-    return (p1->unicode>p2->unicode)-(p1->unicode<p2->unicode);
+static
+int compare(const void *v1, const void *v2)
+{
+ stIntCodePairs *p1=(stIntCodePairs *)v1;
+ stIntCodePairs *p2=(stIntCodePairs *)v2;
+ return (p1->unicode>p2->unicode)-(p1->unicode<p2->unicode);
 }
 
 // This is what usually call: TNoCaseNoOwnerStringCollection, but isn't
 // available in TV, yet
-class TVCodePageCol : public TStringCollection {
-    public:
-        TVCodePageCol(ccIndex aLimit, ccIndex aDelta) :
-            TStringCollection(aLimit,aDelta) {
-        };
-        int compare(void *s1,void *s2) { return strcasecmp((char *)s1,(char *)s2); };
-        void freeItem(void *) {};
+class TVCodePageCol : public TStringCollection
+{
+public:
+ TVCodePageCol(ccIndex aLimit, ccIndex aDelta) :
+      TStringCollection(aLimit,aDelta) {};
+ int compare(void *s1,void *s2) { return strcasecmp((char *)s1,(char *)s2); };
+ void freeItem(void *) {};
 };
 
-//****************************************************************************
-// Defined code pages sorted by ID:
-//
-//Name                        ID
-//PC 437 ASCII ext.           437
-//PC 737 Greek                737
-//PC 775 DOS Baltic Rim       775
-//PC 850 Latin 1              850
-//PC 852 Latin 2              852
-//PC 855 Russian 2            855
-//PC 857 Turkish              857
-//PC 860 Portuguese           860
-//PC 861 Icelandic            861
-//PC 863 French               863
-//PC 865 Nordic               865
-//PC 866 Russian              866
-//PC 869 Greek 2              869
-//CP 1250 Win Latin 2         1250
-//CP 1251 Win Russian         1251
-//CP 1252 Win Latin 1         1252
-//CP 1253 Win Greek           1253
-//CP 1254 Win Turkish         1254
-//CP 1257 Win Baltic          1257
-//Mac Cyr. CP 10007           10007
-//ISO 8859-1 Latin 1          88791
-//ISO 8859-2 Latin 2          88792
-//ISO 8859-3 Latin 3          88593
-//ISO 8859-4 Latin 4          88594
-//ISO 8859-5 Russian          88595
-//ISO 8859-7 Greek            88597
-//ISO 8859-9                  88599
-//ISO Latin 1 (Linux)         885901
-//ISO Latin 1u(Linux)         885911
-//ISO 8859-14                 885914
-//ISO 8859-15 Icelan.         885915
-//ISO Latin 2 (Linux)         885920
-//ISO Latin 2u(Linux)         885921
-//ISO Latin 2 (Sun)           885922
-//ISO Latin 2+Euro (Linux)    885923
-//KOI-8r (Russian)            100000
-//KOI-8 with CRL/NMSU         100001
-//Mac OS Ukrainian            100072
-//Osnovnoj Variant Russian    885951
-//Alternativnyj Variant RU    885952
-//U-code Russian              885953
-//Mazovia (polish)            1000000
-//ISO 5427 ISO-IR-37 KOI-7    3604494
-//ECMA-Cyr.ISO-IR-111         17891342
-//JUS_I.B1.003-SERB ISOIR146  21364750
-//JUS_I.B1.003-MAC ISO-IR-147 21430286
-//Cyrillic ISO-IR-153         22216718
-//
-//****************************************************************************
+/*****************************************************************************
+ Defined code pages sorted by ID:
+
+Name                        ID
+PC 437 ASCII ext.           437
+PC 737 Greek                737
+PC 775 DOS Baltic Rim       775
+PC 850 Latin 1              850
+PC 852 Latin 2              852
+PC 855 Russian 2            855
+PC 857 Turkish              857
+PC 860 Portuguese           860
+PC 861 Icelandic            861
+PC 863 French               863
+PC 865 Nordic               865
+PC 866 Russian              866
+PC 869 Greek 2              869
+CP 1250 Win Latin 2         1250
+CP 1251 Win Russian         1251
+CP 1252 Win Latin 1         1252
+CP 1253 Win Greek           1253
+CP 1254 Win Turkish         1254
+CP 1257 Win Baltic          1257
+Mac Cyr. CP 10007           10007
+ISO 8859-1 Latin 1          88791
+ISO 8859-2 Latin 2          88792
+ISO 8859-3 Latin 3          88593
+ISO 8859-4 Latin 4          88594
+ISO 8859-5 Russian          88595
+ISO 8859-7 Greek            88597
+ISO 8859-9                  88599
+ISO Latin 1 (Linux)         885901
+ISO Latin 1u(Linux)         885911
+ISO 8859-14                 885914
+ISO 8859-15 Icelan.         885915
+ISO Latin 2 (Linux)         885920
+ISO Latin 2u(Linux)         885921
+ISO Latin 2 (Sun)           885922
+ISO Latin 2+Euro (Linux)    885923
+KOI-8r (Russian)            100000
+KOI-8 with CRL/NMSU         100001
+Mac OS Ukrainian            100072
+Osnovnoj Variant Russian    885951
+Alternativnyj Variant RU    885952
+U-code Russian              885953
+Mazovia (polish)            1000000
+ISO 5427 ISO-IR-37 KOI-7    3604494
+ECMA-Cyr.ISO-IR-111         17891342
+JUS_I.B1.003-SERB ISOIR146  21364750
+JUS_I.B1.003-MAC ISO-IR-147 21430286
+Cyrillic ISO-IR-153         22216718
+
+*****************************************************************************/
+
 // PC437 doesn't need traslation, they are the first 256 chars.
-//
-CodePage TVCodePage::stPC437= { "PC 437 ASCII ext.", 437,
-                                { 128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,
-                                  144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,
-                                  160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,
-                                  176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
-                                  192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,
-                                  208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,
-                                  224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,
-                                  240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255
-                                },
-                                "ÇêÜèÑéáÄÅöëíîô§•",
-                                "ÉÖàâäãåçìïñóò†°¢£·",0,0
-                              };
+CodePage TVCodePage::stPC437=
+{ "PC 437 ASCII ext.",
+  437,
+ { 128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,
+   144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,
+   160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,
+   176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
+   192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,
+   208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,
+   224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,
+   240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255 },
+ "ÇêÜèÑéáÄÅöëíîô§•",
+ "ÉÖàâäãåçìïñóò†°¢£·",0,0
+};
 
-CodePage TVCodePage::stPC737= { "PC 737 Greek", 737,
-                                { 617,618,226,560,619,620,621,233,622,623,583,624,625,561,626,562,
-                                  627,228,628,629,232,630,563,234,224,613,546,235,238,547,548,549,
-                                  550,614,551,615,552,553,616,227,554,229,555,231,556,237,557,558,
-                                  176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
-                                  192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,
-                                  208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,
-                                  559,565,566,567,579,568,569,570,580,571,572,573,574,575,576,577,
-                                  578,241,342,343,631,632,246,344,248,345,250,346,347,253,254,255
-                                },
-                                "òÄôÅØñõÉúÑ≠îöÇûÜ†à•ç°â¢ä£ã§å¶éßè®ê©ë´í‡ó™ëÆï¨ìùÖ·Í‚Î„ÏÂÌÊÓÈÁÔ‰ÙËı",
-                                "ü",0,0
-                              };
+CodePage TVCodePage::stPC737=
+{ "PC 737 Greek",
+  737,
+ { 617,618,226,560,619,620,621,233,622,623,583,624,625,561,626,562,
+   627,228,628,629,232,630,563,234,224,613,546,235,238,547,548,549,
+   550,614,551,615,552,553,616,227,554,229,555,231,556,237,557,558,
+   176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
+   192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,
+   208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,
+   559,565,566,567,579,568,569,570,580,571,572,573,574,575,576,577,
+   578,241,342,343,631,632,246,344,248,345,250,346,347,253,254,255 },
+ "òÄôÅØñõÉúÑ≠îöÇûÜ†à•ç°â¢ä£ã§å¶éßè®ê©ë´í‡ó™ëÆï¨ìùÖ·Í‚Î„ÏÂÌÊÓÈÁÔ‰ÙËı",
+ "ü",0,0
+};
 
-CodePage TVCodePage::stPC775= { "PC 775 DOS Baltic Rim", 775,
-                                { 264,129,130,584,132,511,134,256,317,497,516,517,499,273,142,143,
-                                  144,145,146,501,148,510,155,270,260,153,154,318,156,320,334,331,
-                                  585,498,162,316,315,262,435,338,336,335,170,171,172,319,174,175,
-                                  176,177,178,179,180,313,299,314,542,185,186,187,188,522,304,191,
-                                  192,193,194,195,196,197,524,502,200,201,202,203,204,205,206,306,
-                                  311,294,312,543,523,297,525,503,298,217,218,219,220,221,222,223,
-                                  268,225,500,267,285,288,230,258,512,513,544,545,515,496,514, 39,
-                                  341,241,434,343, 20, 21,246,429,248,249,250,346,347,253,254,255
-                                },
-                                "áÄãäÅöÇêÉ†ÑéÖïÜèà≠âÌå°•çëíì‚îôòóõù¢‡§£–µ—∂“∑”∏‘Ω’æ÷∆◊«ÿœÁ„‰ÂÈËÎÍÏÓ",
-                                "·Ê",0,0
-                              };
+CodePage TVCodePage::stPC775=
+{ "PC 775 DOS Baltic Rim",
+  775,
+ { 264,129,130,584,132,511,134,256,317,497,516,517,499,273,142,143,
+   144,145,146,501,148,510,155,270,260,153,154,318,156,320,334,331,
+   585,498,162,316,315,262,435,338,336,335,170,171,172,319,174,175,
+   176,177,178,179,180,313,299,314,542,185,186,187,188,522,304,191,
+   192,193,194,195,196,197,524,502,200,201,202,203,204,205,206,306,
+   311,294,312,543,523,297,525,503,298,217,218,219,220,221,222,223,
+   268,225,500,267,285,288,230,258,512,513,544,545,515,496,514, 39,
+   341,241,434,343, 20, 21,246,429,248,249,250,346,347,253,254,255
+ },
+ "áÄãäÅöÇêÉ†ÑéÖïÜèà≠âÌå°•çëíì‚îôòóõù¢‡§£–µ—∂“∑”∏‘Ω’æ÷∆◊«ÿœÁ„‰ÂÈËÎÍÏÓ",
+ "·Ê",0,0
+};
 
-CodePage TVCodePage::stPC850= { "PC 850 Latin 1", 850,
-                                { 128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,
-                                  144,145,146,147,148,149,150,151,152,153,154,318,156,320,334,159,
-                                  160,161,162,163,164,165,166,167,168,335,170,171,172,173,174,175,
-                                  176,177,178,179,180,263,289,275,336,185,186,187,188,155,157,191,
-                                  192,193,194,195,196,197,284,287,200,201,202,203,204,205,206,331,
-                                  321,323,290,280,276,337,265,291,281,217,218,219,220,338,277,223,
-                                  268,225,292,278,285,288,230,332,333,271,293,279,261,272,339,340,
-                                  341,241,342,343, 20, 21,246,344,248,345,250,346,347,253,254,255
-                                },
-                                "áÄÅöÇêÉ∂ÑéÖ∑Üèà“â”ä‘ãÿå◊çﬁëíì‚îôï„ñÍóÎõù†µ°÷¢‡£È§•∆«–—‰ÂÁËÏÌ",
-                                "òœ’·Ê",0,0
-                               };
+CodePage TVCodePage::stPC850=
+{ "PC 850 Latin 1",
+  850,
+ { 128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,
+   144,145,146,147,148,149,150,151,152,153,154,318,156,320,334,159,
+   160,161,162,163,164,165,166,167,168,335,170,171,172,173,174,175,
+   176,177,178,179,180,263,289,275,336,185,186,187,188,155,157,191,
+   192,193,194,195,196,197,284,287,200,201,202,203,204,205,206,331,
+   321,323,290,280,276,337,265,291,281,217,218,219,220,338,277,223,
+   268,225,292,278,285,288,230,332,333,271,293,279,261,272,339,340,
+   341,241,342,343, 20, 21,246,344,248,345,250,346,347,253,254,255 },
+ "áÄÅöÇêÉ∂ÑéÖ∑Üèà“â”ä‘ãÿå◊çﬁëíì‚îôï„ñÍóÎõù†µ°÷¢‡£È§•∆«–—‰ÂÁËÏÌ",
+ "òœ’·Ê",0,0
+};
 
-CodePage TVCodePage::stPC852= { "PC 852 Latin 2", 852,
-                                { 128,129,130,131,132,282,256,135,317,137,354,353,140,273,142,264,
-                                  144,266,257,147,148,327,325,270,260,153,154,305,326,319,334,294,
-                                  160,161,162,163,313,311,306,298,314,312,  0,262,299,307,174,175,
-                                  176,177,178,179,180,263,289,301,309,185,186,187,188,316,315,191,
-                                  192,193,194,195,196,197,330,328,200,201,202,203,204,205,206,331,
-                                  321,323,300,280,324,302,265,291,358,217,218,219,220,310,283,223,
-                                  268,225,292,267,258,295,304,297,269,271,259,274,261,272,308,340,
-                                  341,348,349,350,351, 21,246,344,248,345,352,286,303,296,254,255
-                                },
-                                "áÄÅöÇêÉ∂ÑéÖﬁÜèàùâ”ãäå◊´çíëì‚îôñïòóü¨†µ°÷¢‡£È•§ß¶©®≠∏ÿ∑æΩ«∆–—Â’Ó›‰„ÁÊÍË˚ÎÏÌ˝¸",
-                                "õúœ“‘·",0,0
-                              };
+CodePage TVCodePage::stPC852=
+{ "PC 852 Latin 2",
+  852,
+ { 128,129,130,131,132,282,256,135,317,137,354,353,140,273,142,264,
+   144,266,257,147,148,327,325,270,260,153,154,305,326,319,334,294,
+   160,161,162,163,313,311,306,298,314,312,  0,262,299,307,174,175,
+   176,177,178,179,180,263,289,301,309,185,186,187,188,316,315,191,
+   192,193,194,195,196,197,330,328,200,201,202,203,204,205,206,331,
+   321,323,300,280,324,302,265,291,358,217,218,219,220,310,283,223,
+   268,225,292,267,258,295,304,297,269,271,259,274,261,272,308,340,
+   341,348,349,350,351, 21,246,344,248,345,352,286,303,296,254,255 },
+ "áÄÅöÇêÉ∂ÑéÖﬁÜèàùâ”ãäå◊´çíëì‚îôñïòóü¨†µ°÷¢‡£È•§ß¶©®≠∏ÿ∑æΩ«∆–—Â’Ó›‰„ÁÊÍË˚ÎÏÌ˝¸",
+ "õúœ“‘·",0,0
+};
 
 // PC855 Russian DOS code page
-CodePage TVCodePage::stPC855= { "PC 855 Russian 2", 855,
-                                { 413,412,415,414,604,605,408,407,606,612,607,610,608,416,609,611,
-                                  418,417,420,419,422,421,424,423,426,425,428,427,405,379,401,375,
-                                  598,360,381,361,397,371,384,363,599,589,396,370,383,362,174,175,
-                                  176,177,178,179,180,603,597,387,365,185,186,187,188,388,366,191,
-                                  192,193,194,195,196,197,389,590,200,201,202,203,204,205,206,331,
-                                  390,367,391,591,392,592,600,593,393,217,218,219,220,368,406,223,
-                                  380,601,594,602,595,394,596,395,369,385,364,382,588,403,377,411,
-                                  341,402,376,386,409,399,373,404,378,400,374,398,372, 21,254,255
-                                },
-                                "ÄÅÇÉÑÖÜáàâäãåçéèêëíìîïñóòôöõúùûü†°¢£§•¶ß®©™´¨≠µ∂∑∏Ωæ∆«–—“”‘’÷◊ÿ›ﬁ‡·‚„‰ÂÊÁËÈÍÎÏÌÓÒÚÛÙıˆ˜¯˘˙˚¸",
-                                "",0,0
-                              };
+CodePage TVCodePage::stPC855=
+{ "PC 855 Russian 2",
+  855,
+ { 413,412,415,414,604,605,408,407,606,612,607,610,608,416,609,611,
+   418,417,420,419,422,421,424,423,426,425,428,427,405,379,401,375,
+   598,360,381,361,397,371,384,363,599,589,396,370,383,362,174,175,
+   176,177,178,179,180,603,597,387,365,185,186,187,188,388,366,191,
+   192,193,194,195,196,197,389,590,200,201,202,203,204,205,206,331,
+   390,367,391,591,392,592,600,593,393,217,218,219,220,368,406,223,
+   380,601,594,602,595,394,596,395,369,385,364,382,588,403,377,411,
+   341,402,376,386,409,399,373,404,378,400,374,398,372, 21,254,255 },
+ "ÄÅÇÉÑÖÜáàâäãåçéèêëíìîïñóòôöõúùûü†°¢£§•¶ß®©™´¨≠µ∂∑∏Ωæ∆«–—“”‘’÷◊ÿ›ﬁ‡·‚„‰ÂÊÁËÈÍÎÏÌÓÒÚÛÙıˆ˜¯˘˙˚¸",
+ "",0,0
+};
 
-CodePage TVCodePage::stPC857= { "PC 857 Turkish", 857,
-                                { 128,129,130,131,132,133,134,135,136,137,138,139,140,337,142,143,
-                                  144,145,146,147,148,149,150,151,487,153,154,318,156,320,309,307,
-                                  160,161,162,163,164,165,504,505,168,335,170,171,172,173,174,175,
-                                  176,177,178,179,180,263,289,275,336,185,186,187,188,155,157,191,
-                                  192,193,194,195,196,197,284,287,200,201,202,203,204,205,206,331,
-                                  167,166,290,280,276,276,265,291,281,217,218,219,220,338,277,223,
-                                  268,225,292,278,285,288,230,230,334,271,293,279,141,152,339,340,
-                                  341,241,241,343, 20, 21,246,344,248,345,250,346,347,253,254,255
-                                },
-                                "áÄÅöÇêÉ∂ÑéÖ∑Üèà“â”ä‘ãÿå◊çòëíì‚îôï„ñÍóÎõùüû†µ°÷£È§•ß¶∆«¢‡ﬁÏ‰Â",
-                                "’·ÊÁÌ",0,0
-                              };
+CodePage TVCodePage::stPC857=
+{ "PC 857 Turkish",
+  857,
+ { 128,129,130,131,132,133,134,135,136,137,138,139,140,337,142,143,
+   144,145,146,147,148,149,150,151,487,153,154,318,156,320,309,307,
+   160,161,162,163,164,165,504,505,168,335,170,171,172,173,174,175,
+   176,177,178,179,180,263,289,275,336,185,186,187,188,155,157,191,
+   192,193,194,195,196,197,284,287,200,201,202,203,204,205,206,331,
+   167,166,290,280,276,276,265,291,281,217,218,219,220,338,277,223,
+   268,225,292,278,285,288,230,230,334,271,293,279,141,152,339,340,
+   341,241,241,343, 20, 21,246,344,248,345,250,346,347,253,254,255 },
+ "áÄÅöÇêÉ∂ÑéÖ∑Üèà“â”ä‘ãÿå◊çòëíì‚îôï„ñÍóÎõùüû†µ°÷£È§•ß¶∆«¢‡ﬁÏ‰Â",
+ "’·ÊÁÌ",0,0
+};
 
-CodePage TVCodePage::stPC860= { "PC 860 Portuguese", 860,
-                                { 128,129,130,131,284,133,263,135,136,290,138,265,140,141,287,289,
-                                  144,275,276,147,285,149,271,151,277,288,154,155,156,279,158,268,
-                                  160,161,162,163,164,165,166,167,168,278,170,171,172,173,174,175,
-                                  176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
-                                  192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,
-                                  208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,
-                                  224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,
-                                  240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255
-                                },
-                                "áÄÅöÇêÉèÑéÖë†Üàâäí°ãìåçòîôï©£ñóù¢ü§•",
-                                "·",0,0
-                              };
+CodePage TVCodePage::stPC860=
+{ "PC 860 Portuguese",
+  860,
+ { 128,129,130,131,284,133,263,135,136,290,138,265,140,141,287,289,
+   144,275,276,147,285,149,271,151,277,288,154,155,156,279,158,268,
+   160,161,162,163,164,165,166,167,168,278,170,171,172,173,174,175,
+   176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
+   192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,
+   208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,
+   224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,
+   240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255 },
+ "áÄÅöÇêÉèÑéÖë†Üàâäí°ãìåçòîôï©£ñóù¢ü§•",
+ "·",0,0
+};
 
-CodePage TVCodePage::stPC861= { "PC 861 Icelandic", 861,
-                                { 128,129,130,131,132,133,134,135,136,137,138,323,322,333,142,143,
-                                  144,145,146,147,148,332,150,272,261,153,154,318,156,320,158,159,
-                                  160,161,162,163,263,265,268,271,168,169,170,171,172,173,174,175,
-                                  176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
-                                  192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,
-                                  208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,
-                                  224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,
-                                  240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255
-                                },
-                                "ÅöÇêÑéÜèáÄåãïçëíîôòóõù†§°•¢¶£ß",
-                                "ÉÖàâäìñ‡·‚„Â‰ÊÁËÈÍÎÌÓü",0,0
-                              };
+CodePage TVCodePage::stPC861=
+{ "PC 861 Icelandic",
+  861,
+ { 128,129,130,131,132,133,134,135,136,137,138,323,322,333,142,143,
+   144,145,146,147,148,332,150,272,261,153,154,318,156,320,158,159,
+   160,161,162,163,263,265,268,271,168,169,170,171,172,173,174,175,
+   176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
+   192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,
+   208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,
+   224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,
+   240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255 },
+ "ÅöÇêÑéÜèáÄåãïçëíîôòóõù†§°•¢¶£ß",
+ "ÉÖàâäìñ‡·‚„Â‰ÊÁËÈÍÎÌÓü",0,0
+};
 
-CodePage TVCodePage::stPC863= { "PC 863 French", 863,
-                                { 128,129,130,131,289,133, 20,135,136,137,138,139,140,342,275, 21,
-                                  144,276,290,147,280,281,150,151,331,292,154,155,156,279,158,159,
-                                  338,340,162,163,345,344,347,339,291,169,170,171,172,173,174,175,
-                                  176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
-                                  192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,
-                                  208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,
-                                  224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,
-                                  240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255
-                                },
-                                "áÄÅöÇêÉÑÖéàíâîäëãïå®ìôñûóù",
-                                "ò¢£·",0,0
-                              };
+CodePage TVCodePage::stPC863=
+{ "PC 863 French",
+  863,
+ { 128,129,130,131,289,133, 20,135,136,137,138,139,140,342,275, 21,
+   144,276,290,147,280,281,150,151,331,292,154,155,156,279,158,159,
+   338,340,162,163,345,344,347,339,291,169,170,171,172,173,174,175,
+   176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
+   192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,
+   208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,
+   224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,
+   240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255 },
+ "áÄÅöÇêÉÑÖéàíâîäëãïå®ìôñûóù",
+ "ò¢£·",0,0
+};
 
-CodePage TVCodePage::stPC865= { "PC 865 Nordic", 865,
-                                { 128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,
-                                  144,145,146,147,148,149,150,151,152,153,154,318,156,320,158,159,
-                                  160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,331,
-                                  176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
-                                  192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,
-                                  208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,
-                                  224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,
-                                  240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255
-                                },
-                                "áÄÅöõùÇêÑéÜèëí§•îô",
-                                "ÉÖàâäãåçìïñóò†°¢£Ø·",0,0
-                              };
+CodePage TVCodePage::stPC865=
+{ "PC 865 Nordic",
+  865,
+ { 128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,
+   144,145,146,147,148,149,150,151,152,153,154,318,156,320,158,159,
+   160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,331,
+   176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
+   192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,
+   208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,
+   224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,
+   240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255 },
+ "áÄÅöõùÇêÑéÜèëí§•îô",
+ "ÉÖàâäãåçìïñóò†°¢£Ø·",0,0
+};
 
-CodePage TVCodePage::stPC869= { "PC 869 Greek 2", 869,
-                                { 0x20,0x20,0x20,0x20,0x20,0x20,572,572,250,170,338, 96, 39,573,341,574,
-                                  575,631,576,576,576,577,632,336,578,253,347,565,156,566,567,568,
-                                  579,581,569,570,617,618,226,560,619,620,621,171,233,622,174,175,
-                                  176,177,178,179,180,623,583,624,625,185,186,187,188,561,626,191,
-                                  192,193,194,195,196,197,562,627,200,201,202,203,204,205,206,228,
-                                  628,629,232,630,563,234,224,613,546,217,218,219,220,235,238,223,
-                                  547,548,549,550,614,551,615,552,553,616,227,554,229,555,231,340,
-                                  341,241,556,237,557, 21,558,564,248,345,559,580,582,571,254,255
-                                },
-                                "õÜùçûèüê†ë¢í£ï˚ñ˝ò÷§◊•ÿ¶›ßﬁ®‡©·™‚¨„≠‰µÂ∂Ê∑Á∏ËΩÈæÍ∆Î«ÏœÌœÓ–Ú—Û“Ù”ˆ‘˙’",
-                                "°¸",0,0
-                              };
+CodePage TVCodePage::stPC869=
+{ "PC 869 Greek 2",
+  869,
+ { 0x20,0x20,0x20,0x20,0x20,0x20,572,572,250,170,338, 96, 39,573,341,574,
+   575,631,576,576,576,577,632,336,578,253,347,565,156,566,567,568,
+   579,581,569,570,617,618,226,560,619,620,621,171,233,622,174,175,
+   176,177,178,179,180,623,583,624,625,185,186,187,188,561,626,191,
+   192,193,194,195,196,197,562,627,200,201,202,203,204,205,206,228,
+   628,629,232,630,563,234,224,613,546,217,218,219,220,235,238,223,
+   547,548,549,550,614,551,615,552,553,616,227,554,229,555,231,340,
+   341,241,556,237,557, 21,558,564,248,345,559,580,582,571,254,255 },
+ "õÜùçûèüê†ë¢í£ï˚ñ˝ò÷§◊•ÿ¶›ßﬁ®‡©·™‚¨„≠‰µÂ∂Ê∑Á∏ËΩÈæÍ∆Î«ÏœÌœÓ–Ú—Û“Ù”ˆ‘˙’",
+ "°¸",0,0
+};
 
-CodePage TVCodePage::ISO8879_1= { "ISO 8859-1 Latin 1", 88791,
-                                { 218,196,191,192,217,179,195,180,194,193,197,201,205,187,200,188,
-                                  186,199,182,209,207,219,178,177,176,223,220,222,221,254,254,254,
-                                   32,173,155,156, 36,157,338, 21,345,336,166,174,170,341,335,341,
-                                  248,241,253,347,340,230, 20,249,344,346,167,175,172,171,343,168,
-                                  275,263,289,287,142,143,146,128,276,144,290,280,277,265,291,281,
-                                  323,165,278,268,292,288,153,334,320,279,271,293,154,272,333,225,
-                                  133,160,131,284,132,134,145,135,138,130,136,137,141,161,140,139,
-                                  321,164,149,162,147,285,148,246,318,151,163,150,129,261,332,152
-                                },
-                                "‡¿·¡‚¬„√‰ƒÂ≈Ê∆Á«Ë»È…Í ÎÀÏÃÌÕÓŒÔœ–Ò—Ú“Û”Ù‘ı’ˆ÷¯ÿ˘Ÿ˙⁄˚€¸‹˝›˛ﬁ",
-                                "µﬂˇ",0,0
-                              };
+CodePage TVCodePage::ISO8879_1=
+{ "ISO 8859-1 Latin 1",
+  88791,
+ { 218,196,191,192,217,179,195,180,194,193,197,201,205,187,200,188,
+   186,199,182,209,207,219,178,177,176,223,220,222,221,254,254,254,
+    32,173,155,156, 36,157,338, 21,345,336,166,174,170,341,335,341,
+   248,241,253,347,340,230, 20,249,344,346,167,175,172,171,343,168,
+   275,263,289,287,142,143,146,128,276,144,290,280,277,265,291,281,
+   323,165,278,268,292,288,153,334,320,279,271,293,154,272,333,225,
+   133,160,131,284,132,134,145,135,138,130,136,137,141,161,140,139,
+   321,164,149,162,147,285,148,246,318,151,163,150,129,261,332,152 },
+ "‡¿·¡‚¬„√‰ƒÂ≈Ê∆Á«Ë»È…Í ÎÀÏÃÌÕÓŒÔœ–Ò—Ú“Û”Ù‘ı’ˆ÷¯ÿ˘Ÿ˙⁄˚€¸‹˝›˛ﬁ",
+ "µﬂˇ",0,0
+};
 
-ushort TVCodePage::LowCrazyCharsRemaped[] = { 439,247,440,441,  4,442,443,444,445,176,177,178,219,220,223,221,
-                                              222,446,447,242,243,448, 17, 16, 24, 25, 26, 27, 18, 29,449,227, // 449 in lat1.sfm
-                                               32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
-                                               48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
-                                               64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
-                                               80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
-                                               96, 97, 98, 99,100,101,102,103,104,105,106,107,108,109,110,111,
-                                              112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,450 };
+ushort TVCodePage::LowCrazyCharsRemaped[] =
+{ 439,247,440,441,  4,442,443,444,445,176,177,178,219,220,223,221,
+  222,446,447,242,243,448, 17, 16, 24, 25, 26, 27, 18, 29,449/*447*/,227, // 449 in lat1.sfm
+   32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+   48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
+   64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
+   80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+   96, 97, 98, 99,100,101,102,103,104,105,106,107,108,109,110,111,
+  112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,450 };
 
 
-CodePage TVCodePage::ISO8859_1_Lat1= { "ISO Latin 1 (Linux)", 885901,
-                                       { 451,452,453,192,454,179,218,195,455,217,196,193,191,180,194,197,
-                                         456,457,458,200,459,186,201,204,460,188,205,202,187,185,203,206,
-                                         255,173,155,156, 36,157,338, 21,345,336,166,174,170,341,335,341,
-                                         248,241,253,347,340,230, 20,249,344,346,167,175,172,171,343,168,
-                                         275,263,289,287,142,143,146,128,276,144,290,280,277,265,291,281,
-                                         323,165,278,268,292,288,153,334,320,279,271,293,154,272,333,225,
-                                         133,160,131,284,132,134,145,135,138,130,136,137,141,161,140,139,
-                                         321,164,149,162,147,285,148,246,318,151,163,150,129,261,332,152
-                                       },
-                                       "‡¿·¡‚¬„√‰ƒÂ≈Ê∆Á«Ë»È…Í ÎÀÏÃÌÕÓŒÔœ–Ò—Ú“Û”Ù‘ı’ˆ÷¯ÿ˘Ÿ˙⁄˚€¸‹ˇ˝›˛ﬁ",
-                                       "µﬂ",
-                                      128,LowCrazyCharsRemaped
-                                    };
+CodePage TVCodePage::ISO8859_1_Lat1=
+{ "ISO Latin 1 (Linux)",
+  885901,
+ { 451,452,453,192,454,179,218,195,455,217,196,193,191,180,194,197,
+   456,457,458,200,459,186,201,204,460,188,205,202,187,185,203,206,
+   255,173,155,156, 36,157,338, 21,345,336,166,174,170,341,335,341,
+   248,241,253,347,340,230, 20,249,344,346,167,175,172,171,343,168,
+   275,263,289,287,142,143,146,128,276,144,290,280,277,265,291,281,
+   323,165,278,268,292,288,153,334,320,279,271,293,154,272,333,225,
+   133,160,131,284,132,134,145,135,138,130,136,137,141,161,140,139,
+   321,164,149,162,147,285,148,246,318,151,163,150,129,261,332,152 },
+ "‡¿·¡‚¬„√‰ƒÂ≈Ê∆Á«Ë»È…Í ÎÀÏÃÌÕÓŒÔœ–Ò—Ú“Û”Ù‘ı’ˆ÷¯ÿ˘Ÿ˙⁄˚€¸‹ˇ˝›˛ﬁ",
+ "µﬂ",
+ 128,LowCrazyCharsRemaped
+};
 
-CodePage TVCodePage::ISO8859_1u_Lat1= { "ISO Latin 1u(Linux)", 885911,
-                                        { 275,263,289,287,142,143,146,128,276,144,290,280,277,265,291,281,
-                                          323,165,278,268,292,288,153,334,320,279,271,293,154,272,333,225,
-                                           32,173,155,156, 36,157,338, 21,345,336,166,174,170,341,335,341,
-                                          248,241,253,347,340,230, 20,249,344,346,167,175,172,171,343,168,
-                                          451,452,453,192,454,179,218,195,455,217,196,193,191,180,194,197,
-                                          456,457,458,200,459,186,201,204,460,188,205,202,187,185,203,206,
-                                          133,160,131,284,132,134,145,135,138,130,136,137,141,161,140,139,
-                                          321,164,149,162,147,285,148,246,318,151,163,150,129,261,332,152
-                                        },
-                                        "‡Ä·Å‚Ç„É‰ÑÂÖÊÜÁáËàÈâÍäÎãÏåÌçÓéÔèêÒëÚíÛìÙîıïˆñ¯ò˘ô˙ö˚õ¸úˇ˝ù˛û",
-                                        "µü",
-                                       128,LowCrazyCharsRemaped
-                                     };
+CodePage TVCodePage::ISO8859_1u_Lat1=
+{ "ISO Latin 1u(Linux)",
+  885911,
+ { 275,263,289,287,142,143,146,128,276,144,290,280,277,265,291,281,
+   323,165,278,268,292,288,153,334,320,279,271,293,154,272,333,225,
+    32,173,155,156, 36,157,338, 21,345,336,166,174,170,341,335,341,
+   248,241,253,347,340,230, 20,249,344,346,167,175,172,171,343,168,
+   451,452,453,192,454,179,218,195,455,217,196,193,191,180,194,197,
+   456,457,458,200,459,186,201,204,460,188,205,202,187,185,203,206,
+   133,160,131,284,132,134,145,135,138,130,136,137,141,161,140,139,
+   321,164,149,162,147,285,148,246,318,151,163,150,129,261,332,152 },
+ "‡Ä·Å‚Ç„É‰ÑÂÖÊÜÁáËàÈâÍäÎãÏåÌçÓéÔèêÒëÚíÛìÙîıïˆñ¯ò˘ô˙ö˚õ¸úˇ˝ù˛û",
+ "µü",
+ 128,LowCrazyCharsRemaped
+};
 
-CodePage TVCodePage::ISO8879_2= { "ISO 8859-2 Latin 2", 88792,
-                                  { 218,196,191,192,217,179,195,180,194,193,197,201,205,187,200,188,
-                                    186,199,182,209,207,219,178,177,176,223,220,222,221,254,254,254,
-                                    255,313,351,319,331,356,270, 21,345,304,309,305,273,341,306,316,
-                                    248,311,349,317,340,325,260,350,344,297,307,326,262,348,298,315,
-                                    269,263,289,330,142,266,264,128,299,144,314,280,301,265,291,300,
-                                    323,267,302,268,292,354,153,334,303,282,271,274,154,272,310,225,
-                                    259,160,131,328,132,257,256,135,294,130,312,137,358,161,140,324,
-                                    321,258,295,162,147,353,148,246,296,283,163,286,129,261,308,352
-                                  },
-                                  "±°≥£µ•∂¶π©∫™ª´º¨æÆøØ‡¿·¡‚¬„√‰ƒÂ≈Ê∆Á«Ë»È…Í ÎÀÏÃÌÕÓŒÔœ–Ò—Ú“Û”Ù‘ı’ˆ÷¯ÿ˘Ÿ˙⁄˚€¸‹˝›˛ﬁ",
-                                  "",0,0
-                                };
+CodePage TVCodePage::ISO8879_2=
+{ "ISO 8859-2 Latin 2",
+  88792,
+ { 218,196,191,192,217,179,195,180,194,193,197,201,205,187,200,188,
+   186,199,182,209,207,219,178,177,176,223,220,222,221,254,254,254,
+   255,313,351,319,331,356,270, 21,345,304,309,305,273,341,306,316,
+   248,311,349,317,340,325,260,350,344,297,307,326,262,348,298,315,
+   269,263,289,330,142,266,264,128,299,144,314,280,301,265,291,300,
+   323,267,302,268,292,354,153,334,303,282,271,274,154,272,310,225,
+   259,160,131,328,132,257,256,135,294,130,312,137,358,161,140,324,
+   321,258,295,162,147,353,148,246,296,283,163,286,129,261,308,352 },
+ "±°≥£µ•∂¶π©∫™ª´º¨æÆøØ‡¿·¡‚¬„√‰ƒÂ≈Ê∆Á«Ë»È…Í ÎÀÏÃÌÕÓŒÔœ–Ò—Ú“Û”Ù‘ı’ˆ÷¯ÿ˘Ÿ˙⁄˚€¸‹˝›˛ﬁ",
+ "",0,0
+};
 
 CodePage TVCodePage::ISO8859_2_Lat2=
 { "ISO Latin 2 (Linux)",
@@ -1359,7 +1385,7 @@ TVCodePage::TVCodePage(int idApp, int idScr, int idInp)
  TGKey::SetCodePage(idInp);
  if (idApp!=curAppCP)
    {
-    curAppCP=idApp;
+    curAppCP=idApp; // After filling the tables
     RemapTVStrings(GetTranslate(curAppCP));
    }
 }
@@ -1461,6 +1487,28 @@ to translate values on the fly. @x{::CreateRemap}.
 
 void TVCodePage::CreateOnTheFlyInpRemap(int idInp, int idApp)
 {
+ // Unicode tables
+ // Create a table to convert 8 bits inp. code page into 16 bits unicode
+ ushort *internals=GetTranslate(idInp);
+ unsigned i;
+ for (i=0; i<256; i++)
+     inpToUnicode[i]=UnicodeForInternalCode(internals[i]);
+
+ if (!unicodeToInp || curInpCP!=idInp)
+   {
+    // Create a "partition tree" to convert a 16 bits unicode into 8 bits inp
+    // code page
+    delete unicodeToInp;
+    unicodeToInp=NULL;
+    if (idInp!=idApp)
+      {
+       unicodeToInp=new TVPartitionTree556();
+       for (i=0; i<256; i++)
+           unicodeToInp->add(appToUnicode[i],i);
+      }
+   }
+
+ // Remap tables
  if (idInp==idApp)
    {
     NeedsOnTheFlyInpRemap=0;
@@ -1500,8 +1548,8 @@ void TVCodePage::SetCodePage(int idApp, int idScr, int idInp)
  TGKey::SetCodePage(idInp);
  if (curAppCP!=idApp)
    {
-    curAppCP=idApp;
-    FillTables(curAppCP);
+    FillTables(idApp);
+    curAppCP=idApp; // After filling the tables
     RemapTVStrings(GetTranslate(curAppCP));
    }
 }
@@ -1510,6 +1558,7 @@ void TVCodePage::SetCodePage(int idApp, int idScr, int idInp)
 
   Description:
   Protected member used to create the toupper, tolower and isalpha tables.
+Also creates tables to convert code page <-> Unicode.
 
 ***************************************************************************/
 
@@ -1553,6 +1602,22 @@ void TVCodePage::FillTables(int id)
  if (s)
     for (; *s; s++)
         AlphaTable[*s]=alphaChar;
+
+ // Create a table to convert 8 bits app. code page into 16 bits unicode
+ ushort *internals=GetTranslate(id);
+ for (i=0; i<256; i++)
+     appToUnicode[i]=UnicodeForInternalCode(internals[i]);
+
+ // Create a "partition tree" to convert a 16 bits unicode into 8 bits app
+ // code page
+ if (!unicodeToApp || id!=curAppCP)
+   {
+    delete unicodeToApp;
+    unicodeToApp=new TVPartitionTree556();
+    for (i=0; i<256; i++)
+        unicodeToApp->add(appToUnicode[i],i);
+   }
+
  /* Dump tables
  fputs("uchar          TVCodePage::AlphaTable[256]=\n{\n",stderr);
  for (i=0; i<256; i++)
@@ -1586,6 +1651,8 @@ TVCodePage::~TVCodePage()
 {
  CLY_destroy(CodePages);
  CodePages=NULL;
+ if (unicodeToApp)
+    delete unicodeToApp;
 }
 
 /**[txh]********************************************************************
@@ -1889,6 +1956,7 @@ void TVCodePage::RemapTVStrings(ushort *map)
  C(TFrame,zoomIcon);
  C(TFrame,unZoomIcon);
  C(TFrame,dragIcon);
+ C(TFrame,animIcon);
  C(THistory,icon);
  C(TMonoSelector,button);
  C(TStatusLine,hintSeparator);
@@ -2480,6 +2548,7 @@ stIntCodePairs TVCodePage::InternalMap[]=
  { 0x2022,    7 },
  { 0x2024,    7 },
  { 0x2026,  430 },
+ { 0x2027,  249 },
  { 0x2030,  433 },
  { 0x203c,   19 },
  { 0x207f,  252 },
@@ -2518,27 +2587,16 @@ stIntCodePairs TVCodePage::InternalMap[]=
  { 0x2423,   32 }, // Should be fixed
  { 0x2424,  446 },
  { 0x2500,  196 },
- { 0x2501,  205 }, // (*1)
  { 0x2502,  179 },
- { 0x2503,  186 }, // (*1)
  { 0x250c,  218 },
- { 0x250f,  201 }, // (*1)
  { 0x2510,  191 },
- { 0x2513,  187 }, // (*1)
  { 0x2514,  192 },
- { 0x2517,  200 }, // (*1)
  { 0x2518,  217 },
- { 0x251b,  188 }, // (*1)
  { 0x251c,  195 },
- { 0x2523,  204 }, // (*1)
  { 0x2524,  180 },
- { 0x252b,  185 }, // (*1)
  { 0x252c,  194 },
- { 0x2533,  203 }, // (*1)
  { 0x2534,  193 },
- { 0x253b,  202 }, // (*1)
  { 0x253c,  197 },
- { 0x254b,  206 }, // (*1)
  { 0x2550,  205 },
  { 0x2551,  186 },
  { 0x2552,  213 },
@@ -2608,9 +2666,26 @@ stIntCodePairs TVCodePage::InternalMap[]=
  { 0x266a,   13 },
  { 0x266b,   14 },
  { 0x2764,    3 },
+ { 0xf800,  451 }, // Approximation
  { 0xf801,  451 },
  { 0xf803,  456 },
+ { 0xf804,  456 }, // Approximation
  { 0xfffd,  439 }
+};
+
+stIntCodePairs TVCodePage::InternalMapBrokenLinux[]=
+{
+ { 0x2501,  205 }, // (*1)
+ { 0x2503,  186 }, // (*1)
+ { 0x250f,  201 }, // (*1)
+ { 0x2513,  187 }, // (*1)
+ { 0x2517,  200 }, // (*1)
+ { 0x251b,  188 }, // (*1)
+ { 0x2523,  204 }, // (*1)
+ { 0x252b,  185 }, // (*1)
+ { 0x2533,  203 }, // (*1)
+ { 0x253b,  202 }, // (*1)
+ { 0x254b,  206 }, // (*1)
 };
 
 // Notes:
@@ -2622,6 +2697,7 @@ stIntCodePairs TVCodePage::InternalMap[]=
 
 
 const int TVCodePage::providedUnicodes=sizeof(TVCodePage::InternalMap)/sizeof(stIntCodePairs);
+const int TVCodePage::providedUnicodesBL=sizeof(TVCodePage::InternalMapBrokenLinux)/sizeof(stIntCodePairs);
 
 /**[txh]********************************************************************
 
@@ -2656,6 +2732,8 @@ int TVCodePage::InternalCodeForUnicode(ushort unicode)
  if (!unicode) return 0;
  stIntCodePairs s={unicode,0};
  void *res=bsearch(&s,InternalMap,providedUnicodes,sizeof(stIntCodePairs),compare);
+ if (!res)
+    res=bsearch(&s,InternalMapBrokenLinux,providedUnicodesBL,sizeof(stIntCodePairs),compare);
  return res ? ((stIntCodePairs *)res)->code : -1;
 }
 
@@ -2668,32 +2746,38 @@ the Linux driver when the unicodes maps doesn't match with known cp.
   
 ***************************************************************************/
 
-void TVCodePage::CreateCPFromUnicode( CodePage *cp, int id, const char *name, ushort *unicodes) {
-    // Create a code page
-    strcpy(cp->Name,name);
-    cp->id=id;
-    int i;
-    for (i=128; i<256; i++) {
-        int v=unicodes[i];
-        if (v==0xFFFF) {
-            cp->Font[i-128]=0;
-        } else {
-            v=InternalCodeForUnicode(v);
-            cp->Font[i-128]=v==-1 ? 0 : v;
-        }
+void TVCodePage::CreateCPFromUnicode(CodePage *cp, int id, const char *name,
+                                     ushort *unicodes)
+{
+ // Create a code page
+ strcpy(cp->Name,name);
+ cp->id=id;
+ int i;
+ for (i=128; i<256; i++)
+    {
+     int v=unicodes[i];
+     if (v==0xFFFF)
+        cp->Font[i-128]=0;
+     else
+       {
+        v=InternalCodeForUnicode(v);
+        cp->Font[i-128]=v==-1 ? 0 : v;
+       }
     }
-    // Currently we lack an Unicode toupper/lower and isalpha mechanism
-    cp->UpLow=cp->MoreLetters=NULL;
-    cp->LowRemapNum=128;
-    cp->LowRemap=new ushort[128];
-    for (i=0; i<128; i++) {
-        int v=unicodes[i];
-        if (v==0xFFFF) {
-            cp->LowRemap[i]=0;
-        } else {
-            v=InternalCodeForUnicode(v);
-            cp->LowRemap[i]=v==-1 ? 0 : v;
-        }
+ // Currently we lack an Unicode toupper/lower and isalpha mechanism
+ cp->UpLow=cp->MoreLetters=NULL;
+ cp->LowRemapNum=128;
+ cp->LowRemap=new ushort[128];
+ for (i=0; i<128; i++)
+    {
+     int v=unicodes[i];
+     if (v==0xFFFF)
+        cp->LowRemap[i]=0;
+     else
+       {
+        v=InternalCodeForUnicode(v);
+        cp->LowRemap[i]=v==-1 ? 0 : v;
+       }
     }
 }
 
@@ -2737,4 +2821,163 @@ int TVCodePage::LookSimilarInRange(int code, int last)
    }
  return code>last ? -1 : code;
 }
+
+/*****************************************************************************
+ Helper functions used by TView. They convert the application code page values
+to Unicode and viceversa.
+*****************************************************************************/
+
+/**[txh]********************************************************************
+
+  Description:
+  Converts an Unicode value to application code page.
+  
+  Return: application code page value, 0 is the fallback.
+  
+***************************************************************************/
+
+char TVCodePage::convertU16_2_CP(uint16 val)
+{
+ uint16 ret=unicodeToApp->search(val);
+ return ret==0xFFFF ? 0 : (uchar)ret;
+}
+
+/**[txh]********************************************************************
+
+  Description:
+  Converts an application code page value to Unicode.
+  
+  Return: The Unicode that represents this value.
+  
+***************************************************************************/
+
+uint16 TVCodePage::convertCP_2_U16(char val)
+{
+ return appToUnicode[(uchar)val];
+}
+
+/**[txh]********************************************************************
+
+  Description:
+  Converts an Unicode value to input code page.
+  
+  Return: application code page value, 0 is the fallback.
+  
+***************************************************************************/
+
+char TVCodePage::convertU16_2_InpCP(uint16 val)
+{
+ if (!unicodeToInp)
+    return convertU16_2_CP(val);
+ uint16 ret=unicodeToInp->search(val);
+ return ret==0xFFFF ? 0 : (uchar)ret;
+}
+
+/**[txh]********************************************************************
+
+  Description:
+  Converts an input code page value to Unicode.
+  
+  Return: The Unicode that represents this value.
+  
+***************************************************************************/
+
+uint16 TVCodePage::convertInpCP_2_U16(char val)
+{
+ return inpToUnicode[(uchar)val];
+}
+
+/**[txh]********************************************************************
+
+  Description:
+  Converts a buffer containing Unicode/Attribute to Application Code Page/
+Attribute.
+  
+  Return: The destination buffer.
+  
+***************************************************************************/
+
+void *TVCodePage::convertBufferU16_2_CP(void *dest, const void *orig,
+                                        unsigned count)
+{
+ uint16 *o=(uint16 *)orig;
+ uchar *d=(uchar *)dest;
+ while (count--)
+   {
+    uint16 uni=unicodeToApp->search(*(o++));
+    *(d++)=uni==0xFFFF ? 0 : (uchar)uni;
+    *(d++)=(uchar)*(o++);
+   }
+ return dest;
+}
+
+/**[txh]********************************************************************
+
+  Description:
+  Converts a buffer containing Application Code Page/Attribute to
+Unicode/Attribute.
+  
+  Return: The destination buffer.
+  
+***************************************************************************/
+
+void *TVCodePage::convertBufferCP_2_U16(void *dest, const void *orig,
+                                        unsigned count)
+{
+ uint16 *d=(uint16 *)dest;
+ uchar *o=(uchar *)orig;
+ while (count--)
+   {
+    *(d++)=appToUnicode[*(o++)];
+    *(d++)=(uint16)*(o++);
+   }
+ return dest;
+}
+
+/**[txh]********************************************************************
+
+  Description:
+  Converts a string containing Unicode to Application Code Page. The len is
+as returned by strlen and the destination must be len+1 bytes for the EOS.
+  
+  Return: The destination string.
+  
+***************************************************************************/
+
+void *TVCodePage::convertStrU16_2_CP(void *dest, const void *orig,
+                                     unsigned len)
+{
+ uint16 *o=(uint16 *)orig;
+ uchar *d=(uchar *)dest;
+ while (len--)
+   {
+    uint16 uni=unicodeToApp->search(*(o++));
+    *(d++)=uni==0xFFFF ? 0 : (uchar)uni;
+   }
+ *d=0;
+ return dest;
+}
+
+/**[txh]********************************************************************
+
+  Description:
+  Converts a string containing Application Code Page to Unicode. The
+destination must be (len+1)*2 bytes for the EOS.
+  
+  Return: The destination string.
+  
+***************************************************************************/
+
+void *TVCodePage::convertStrCP_2_U16(void *dest, const void *orig,
+                                     unsigned len)
+{
+ uint16 *d=(uint16 *)dest;
+ uchar *o=(uchar *)orig;
+ while (len--)
+    *(d++)=appToUnicode[*(o++)];
+ *d=0;
+ return dest;
+}
+
+
 

@@ -1,5 +1,5 @@
 /* X11 screen routines.
-   Copyright (c) 2001-2003 by Salvador E. Tropea (SET)
+   Copyright (c) 2001-2007 by Salvador E. Tropea (SET)
    Covered by the GPL license.
     Thanks to José Ángel Sánchez Caso (JASC). He implemented a first X11
    driver.
@@ -26,6 +26,8 @@
                          fails to follow the hints. This helps to avoid problems found
                          in KDE 3.1 alpha.
    InternalBusyCursor    When enabled we use our own mouse cursor for it
+   Unicode16             Try using unicode16 mode.
+   UnicodeFont           Name of the font to use for unicode16 mode.
    UseUpdateThread       Uses a separated thread to update the window content.
 
 */
@@ -45,6 +47,8 @@
 #define Uses_string
 #define Uses_unistd   // TScreenX11::System
 #define Uses_signal
+#define Uses_fcntl // open
+#define Uses_snprintf
 #define Uses_AllocLocal
 #define Uses_TDisplay
 #define Uses_TScreen
@@ -52,6 +56,9 @@
 #define Uses_TEvent   // For THWMouseX11
 #define Uses_TVCodePage
 #define Uses_TVOSClipboard
+// Only for testing purposes
+#define Uses_TVFontCollection
+#define Uses_TVPartitionTree556
 #include <tv.h>
 
 // I delay the check to generate as much dependencies as possible
@@ -75,6 +82,11 @@
 
 #include <locale.h>
 #include <sys/time.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <sys/stat.h>
 #ifdef HAVE_LINUX_PTHREAD
  #include <pthread.h>
 #endif
@@ -127,6 +139,10 @@ timeval   TScreenX11::refCursorTime,
           TScreenX11::curCursorTime;
 XSizeHints *TScreenX11::sizeHints=NULL;
 XClassHint *TScreenX11::classHint=NULL;
+void    (*TScreenX11::writeLine)(int x, int y, int w, void *str, unsigned color)=
+                TScreenX11::writeLineCP;
+void    (*TScreenX11::redrawBuf)(int x, int y, unsigned w, unsigned off)=
+                TScreenX11::redrawBufCP;
 
 TScreenX11::~TScreenX11()
 {
@@ -135,7 +151,13 @@ TScreenX11::~TScreenX11()
  if (sizeHints)
     XFree(sizeHints);
  if (classHint)
+   {
+    delete[] classHint->res_name;
+    delete[] classHint->res_class;
+    classHint->res_name=NULL;
+    classHint->res_class=NULL;
     XFree(classHint);
+   }
 
  if (xic)
     XDestroyIC(xic);
@@ -149,6 +171,12 @@ TScreenX11::~TScreenX11()
 
  if (disp)
    {
+    if (TScreen::showBusyState==ShowBusyState)
+      {
+       XFreeCursor(disp,busyCursor);
+       XFreeCursor(disp,leftPtr);
+      }
+
     if (cursorGC)
        XFreeGC(disp,cursorGC);
     XDestroyWindow(disp,mainWin);
@@ -156,6 +184,7 @@ TScreenX11::~TScreenX11()
    }
 
  delete[] screenBuffer;
+
 }
 
 void TScreenX11::clearScreen()
@@ -184,9 +213,16 @@ void TScreenX11::drawChar(GC gc, unsigned x, unsigned y, uchar aChar, uchar aAtt
     XPutImage(disp,mainWin,gc,ximgFont[aChar],0,0,x,y,fontW,fontH);
 }
 
-void TScreenX11::setCharacter(unsigned offset, ushort value)
+static unsigned statSCt=0, statSCs=0;
+
+void TScreenX11::setCharacter(unsigned offset, uint32 value)
 {
- SEMAPHORE_ON;
+ statSCt++;
+ if (screenBuffer[offset]==value)
+   {
+    statSCs++;
+    return;
+   }
  screenBuffer[offset]=value;
 
  unsigned x,y;
@@ -196,6 +232,8 @@ void TScreenX11::setCharacter(unsigned offset, ushort value)
  uchar *theChar=(uchar *)(screenBuffer+offset);
  uchar newChar=theChar[charPos];
  uchar newAttr=theChar[attrPos];
+
+ SEMAPHORE_ON;
  XSetBgFg(newAttr);
  UnDrawCursor();
  drawChar(gc,x,y,newChar,newAttr);
@@ -204,9 +242,21 @@ void TScreenX11::setCharacter(unsigned offset, ushort value)
  SEMAPHORE_OFF;
 }
 
+static unsigned statSCSt=0, statSCSs=0;
+
 void TScreenX11::setCharacters(unsigned offset, ushort *values, unsigned count)
 {
- SEMAPHORE_ON;
+ statSCSt++;
+ // Skip repeated characters at the left
+ for (; count && screenBuffer[offset]==*values; count--, offset++, values++);
+ // Skip repeated characters at the right
+ for (; count && screenBuffer[offset+count-1]==values[count-1]; count--);
+ if (!count)
+   {// All skipped
+    statSCSs++;
+    return;
+   }
+
  unsigned x,y;
  x=(offset%maxX)*fontW;
  y=(offset/maxX)*fontH;
@@ -214,6 +264,8 @@ void TScreenX11::setCharacters(unsigned offset, ushort *values, unsigned count)
  uchar *b=(uchar *)values,newChar,newAttr;
  uchar *sb=(uchar *)(screenBuffer+offset);
  unsigned oldAttr=0x100;
+
+ SEMAPHORE_ON;
  UnDrawCursor();
  while (count--)
    {
@@ -255,6 +307,7 @@ int TScreenX11::System(const char *command, pid_t *pidChild, int in, int out,
  pid_t cpid=fork();
  if (cpid==0)
    {// Ok, we are the child
+
     //   I'm not sure about it, but is the best I have right now.
     //   Doing it we can kill this child and all the subprocesses
     // it creates by killing the group. It also have an interesting
@@ -293,13 +346,16 @@ int TScreenX11::System(const char *command, pid_t *pidChild, int in, int out,
     else
       {// This is much more efficient, but only works if pthreads are off.
        char *argv[4];
-       argv[0]=getenv("SHELL");
+       argv[0]=newStr(getenv("SHELL"));
        if (!argv[0])
-          argv[0]=(char *)"/bin/sh";
-       argv[1]=(char *)"-c";
-       argv[2]=(char *)command;
+          argv[0]=newStr("/bin/sh");
+       argv[1]=newStr("-c");
+       argv[2]=newStr(command);
        argv[3]=0;
        execvp(argv[0],argv);
+       delete[] argv[0];
+       delete[] argv[1];
+       delete[] argv[2];
        // We get here only if exec failed
        _exit(127);
       }
@@ -846,6 +902,427 @@ void TScreenX11::AdjustCursorImage()
  cursorImage->byte_order=cursorImage->bitmap_bit_order=MSBFirst;
 }
 
+
+/************************** Experimental code for testing should be removed
+                            or at least made better */
+static TVFontCollection *uF;
+static int firstGlyph, lastGlyph, numGlyphs;
+static XImage **unicodeGlyphs;
+static TVPartitionTree556 *u2c;
+static uchar *glyphs;
+static const char *tryUnicodeFont=NULL;
+static Font x11Font;
+static int  x11FontOffset;
+static int useX11Font=0;
+
+static
+const char *DataPaths[]=
+{
+ "/usr/share/rhtvision",
+ "/usr/local/share/rhtvision",
+ "/usr/share/setedit",
+ "/usr/local/share/setedit",
+ 0
+};
+
+static
+void ConcatUpto(char *d, const char *o1, const char *o2, const char *o3,
+                int size)
+{
+ int i=0;
+
+ while (i<size && *o1)
+    d[i++]=*(o1++);
+ if (i==size)
+   {
+    d[i-1]=0;
+    return;
+   }
+ if (i && d[i-1]!='/')
+    d[i++]='/';
+ while (i<size && *o2)
+    d[i++]=*(o2++);
+ if (i==size)
+   {
+    d[i-1]=0;
+    return;
+   }
+ if (o3)
+   {
+    if (i && d[i-1]!='/')
+       d[i++]='/';
+    while (i<size && *o3)
+       d[i++]=*(o3++);
+    if (i==size)
+      {
+       d[i-1]=0;
+       return;
+      }
+   }
+ d[i]=0;
+}
+
+static
+int CanOpen(const char *file)
+{
+ printf("Testing %s\n",file);
+ FILE *f=fopen(file,"rt");
+ if (f)
+   {
+    fclose(f);
+    return 1;
+   }
+ return 0;
+}
+
+static
+char *LookForFile(const char *name)
+{
+ char test[PATH_MAX];
+
+ char *env=getenv("TV_FONTS");
+ if (env)
+   {
+    ConcatUpto(test,env,name,NULL,PATH_MAX);
+    if (CanOpen(test))
+       return newStr(test);
+   }
+
+ env=getenv("HOME");
+ if (env)
+   {
+    ConcatUpto(test,env,".tv",name,PATH_MAX);
+    if (CanOpen(test))
+       return newStr(test);
+   }
+
+ int i=0;
+ while (DataPaths[i])
+   {
+    ConcatUpto(test,DataPaths[i],name,NULL,PATH_MAX);
+    if (CanOpen(test))
+       return newStr(test);
+    i++;
+   }
+ return NULL;
+}
+
+void TScreenX11::LoadFontAsUnicode()
+{// Load an SFT file with plenty of glyphs and sizes
+ const char *fontName=NULL;
+
+ if (tryUnicodeFont)
+    fontName=LookForFile(tryUnicodeFont);
+ if (!fontName)
+    fontName=LookForFile("rombios.sft");
+ if (!fontName)
+    return;
+ uF=new TVFontCollection(fontName,TVCodePage::ISOLatin1Linux);
+ DeleteArray(fontName);
+
+ if (!uF->GetError())
+   {// Get the information for all the available glyphs
+    glyphs=uF->GetFontFull(fontW,fontH,firstGlyph,lastGlyph);
+    if (glyphs)
+      {// Create a table to hold all the XImage pointers
+       numGlyphs=lastGlyph-firstGlyph+1;
+       unicodeGlyphs=new XImage *[numGlyphs];
+       memset(unicodeGlyphs,0,sizeof(XImage *)*numGlyphs);
+       // Create a TVPartitionTree556 to convert Unicode into internal code
+       u2c=new TVPartitionTree556();
+       int i;
+       for (i=0; i<TVCodePage::providedUnicodes; i++)
+           if (TVCodePage::InternalMap[i].code>=firstGlyph &&
+               TVCodePage::InternalMap[i].code<=lastGlyph)
+              u2c->add(TVCodePage::InternalMap[i].unicode,TVCodePage::InternalMap[i].code);
+       drawingMode=unicode16;
+      }
+    /*else
+       printf("Error al obtener la font (%d,%d)\n",fontW,fontH);*/
+   }
+ /*else
+    printf("Error al cargar la font\n");*/
+}
+
+inline
+uint16 TScreenX11::unicode2index(uint16 unicode)
+{
+ uint16 code=u2c->isearch(unicode);
+ //printf("D U+%04X -> %d |",aChar,code);
+ if (code==0xFFFF)
+   {
+    code=0; // This should be the "unknown"
+    //printf("U+%04X|",aChar);
+   }
+ else
+    code-=firstGlyph;
+ return code;
+}
+
+inline
+void TScreenX11::checkUnicodeGlyph(uint16 code)
+{
+ if (!unicodeGlyphs[code])
+   {// Not yet created, create it
+    char *data=(char *)malloc(fontSz);
+    memcpy(data,glyphs+code*fontSz,fontSz);
+    /* Create a BitMap Image with this data */
+    unicodeGlyphs[code]=XCreateImage(disp,visual,1,XYBitmap,0,data,fontW,fontH,8,0);
+    /* Set the bit order, this is faster */
+    unicodeGlyphs[code]->byte_order=unicodeGlyphs[code]->bitmap_bit_order=MSBFirst;
+   }
+}
+
+inline
+void TScreenX11::drawCharU16(GC gc, unsigned x, unsigned y, uint16 aChar)
+{
+ // Find the internal code and convert it into an index
+ uint16 code=unicode2index(aChar);
+ // Find the XImage
+ checkUnicodeGlyph(code);
+ XPutImage(disp,mainWin,gc,unicodeGlyphs[code],0,0,x,y,fontW,fontH);
+}
+
+void TScreenX11::setCharactersU16(unsigned offset, ushort *values, unsigned count)
+{
+ statSCSt++;
+ uint32 *b32=(uint32 *)values;
+ uint32 *sb32=(uint32 *)(screenBuffer+offset*2);
+ unsigned i;
+ // Skip repeated characters at the left
+ for (i=0; count && b32[i]==sb32[i]; count--, i++);
+ offset+=i;
+ // Skip repeated characters at the right
+ for (i=count-1; count && b32[i]==sb32[i]; count--, i--);
+ if (!count)
+   {// All skipped
+    statSCSs++;
+    return;
+   }
+
+ unsigned x,y;
+ x=(offset%maxX)*fontW;
+ y=(offset/maxX)*fontH;
+
+ uint16 *b=(uint16 *)values,newChar,newAttr;
+ uint16 *sb=screenBuffer+offset*2;
+
+ unsigned oldAttr=0x10000;
+
+ SEMAPHORE_ON;
+ UnDrawCursor();
+ while (count--)
+   {
+    newChar=b[charPos];
+    newAttr=b[attrPos];
+    if (newChar!=sb[charPos] || newAttr!=sb[attrPos])
+      {
+       sb[charPos]=newChar;
+       sb[attrPos]=newAttr;
+       if (newAttr!=oldAttr)
+         {
+          XSetBgFg(newAttr);
+          oldAttr=newAttr;
+         }
+       drawCharU16(gc,x,y,newChar);
+      }
+    x+=fontW; b+=2; sb+=2;
+   }
+ DrawCursor();
+
+ XFlush(disp);
+ SEMAPHORE_OFF;
+}
+
+void TScreenX11::setCharacterU16(unsigned offset, uint32 value)
+{
+ uint16 newChar=value;
+ uint16 newAttr=value>>16;
+ offset*=2;
+
+ statSCt++;
+ if (screenBuffer[offset]==newChar && screenBuffer[offset+1]==newAttr)
+   {
+    statSCs++;
+    return;
+   }
+
+ screenBuffer[offset]=newChar;
+ screenBuffer[offset+1]=newAttr;
+
+ unsigned x,y;
+ x=(offset%maxX)*fontW;
+ y=(offset/maxX)*fontH;
+
+ SEMAPHORE_ON;
+ XSetBgFg(newAttr);
+ UnDrawCursor();
+ drawCharU16(gc,x,y,newChar);
+ DrawCursor();
+ XFlush(disp);
+ SEMAPHORE_OFF;
+}
+
+/*****************************************************************************
+  The following members are used to draw Unicode16 with X11 fonts.
+*****************************************************************************/
+
+void TScreenX11::writeLineX11U16(int x, int y, int w, void *str, unsigned color)
+{
+ if (!w) return; // Nothing to do
+
+ SEMAPHORE_ON;
+ XSetBgFg(color);
+
+ XChar2b *s=(XChar2b *)str;
+ #ifndef TV_BIG_ENDIAN
+ // Lamentably X11 needs values in big endian style :-(
+ AllocLocalStr(aux,w*2);
+ s=(XChar2b *)aux;
+ uchar *ori=(uchar *)str;
+ int i;
+ for (i=0; i<w; i++)
+    {
+     s[i].byte2=*(ori++);
+     s[i].byte1=*(ori++);
+    }
+ #endif
+ XDrawImageString16(disp,mainWin,gc,x*fontW,y*fontH+x11FontOffset,s,w);
+ SEMAPHORE_OFF;
+}
+
+void TScreenX11::setCharactersX11U16(unsigned offset, ushort *values, unsigned w)
+{
+ statSCSt++;
+ uint32 *b32=(uint32 *)values;
+ uint32 *sb32=(uint32 *)(screenBuffer+offset*2);
+ unsigned i;
+ // Skip repeated characters at the left
+ for (i=0; w && b32[i]==sb32[i]; w--, i++);
+ offset+=i;
+ // Skip repeated characters at the right
+ for (i=w-1; w && b32[i]==sb32[i]; w--, i--);
+ if (!w)
+   {// All skipped
+    statSCSs++;
+    return;
+   }
+
+ SEMAPHORE_ON;
+ int len   = 0;         /* longitud a escribir */
+ int letra = 0;
+ int color = 0;
+ int last  = -1;
+ AllocLocalUShort(tmp,w*2);
+ uint16 *dst=tmp;
+ uint16 *sb=screenBuffer+offset*2;
+
+ unsigned x,y;
+ x=offset%maxX;
+ y=offset/maxX;
+
+ while (w--)
+   {
+    sb[charPos]=letra=values[charPos];
+    sb[attrPos]=color=values[attrPos];
+    
+    if (color!=last)
+      {
+       if (last>=0)
+         {
+          writeLineX11U16(x,y,len,tmp,last);
+          dst=tmp; x+=len; len=0;
+         }
+       last=color;
+      }
+    *dst++=letra; values+=2; len++; sb+=2;
+   }
+  
+ writeLineX11U16(x,y,len,tmp,color);
+ SEMAPHORE_OFF;
+}
+
+/******************* End of experimental code for testing should be removed */
+
+// Look for one font in the specified foundry and family with the specified
+// height (in pixels) and a specified width (+/- 1 of tolerance).
+// The font must have "c" spacing and slant must be regular (not italic).
+// The encoding should be unicode.
+char *TScreenX11::SearchX11Font(const char *foundry, const char *family, int w, int h)
+{
+ AllocLocalStr(pattern,strlen(foundry)+strlen(family)+64);
+
+ char *ret=NULL;
+ int cant;
+ XFontStruct *info;
+ sprintf(pattern,"-%s-%s-*-r-*-*-%d-*-*-*-c-*-iso10646-*",foundry,family,h);
+ char **list=XListFontsWithInfo(disp,pattern,400,&cant,&info);
+ printf("matchs: %d\n",cant);
+ if (list)
+   {
+    char *oneLess,*oneMore,*exact;
+    oneLess=oneMore=exact=NULL;
+    int i=0;
+    while (!exact && i<cant)
+      {
+       if (info[i].max_bounds.width==w)
+          exact=list[i];
+       else
+         {
+          if (!oneLess && info[i].max_bounds.width==w-1)
+             oneLess=list[i];
+          else
+            {
+             if (!oneMore && info[i].max_bounds.width==w+1)
+                oneMore=list[i];
+            }
+         }
+       i++;
+      }
+    if (exact)
+       printf("w=%d\n",w);
+    else if (oneMore)
+       printf("w=%d\n",w+1);
+    else if (oneLess)
+       printf("w=%d\n",w-1);
+    if (!exact) exact=oneMore;
+    if (!exact) exact=oneLess;
+    if (exact)  ret=newStr(exact);
+    XFreeFontInfo(list,info,cant);
+   }
+
+ return ret;
+}
+
+char *TScreenX11::SearchX11Font(const char *foundry, const char *family)
+{
+ char *ret;
+ printf("h=%d\n",fontH);
+ ret=SearchX11Font(foundry,family,fontW,fontH);
+ if (!ret)
+   {
+    printf("h=%d\n",fontH+1);
+    ret=SearchX11Font(foundry,family,fontW,fontH+1);
+    if (!ret)
+      {
+       printf("h=%d\n",fontH-1);
+       ret=SearchX11Font(foundry,family,fontW,fontH-1);
+      }
+   }
+ return ret;
+}
+
+char *TScreenX11::SearchX11Font(const char *pattern)
+{
+ char *ret=NULL;
+ int cant;
+ char **list=XListFonts(disp,pattern,1,&cant);
+ if (cant)
+    ret=newStr(list[0]);
+ return ret;
+}
+
+
 TScreenX11::TScreenX11()
 {
  memset(ximgFont,0,sizeof(XImage *)*256);
@@ -899,27 +1376,10 @@ TScreenX11::TScreenX11()
  if (optSearch("Font10x20",aux) && aux)
     fontW=10, fontH=20;
 
- if (fontW==10 || fontH==20)
-    defaultFont=&font10x20;
- else
-    defaultFont=&font8x16;
- TScreenFont256 *useFont;
- int freeFontData=1;
- if (!frCB || !(useFont=frCB(0,fontW,fontH)))
-   {
-    useFont=defaultFont;
-    freeFontData=0;
-   }
- fontW=useFont->w;
- fontH=useFont->h;
- fontWb=(useFont->w+7)/8;
- fontSz=fontWb*fontH;
- uchar *fontData=useFont->data;
-
- aux=0;
+ uchar *fontData=NULL;
+ int freeFontData=0;
  TScreenFont256 *secFont=NULL;
- if (frCB && optSearch("LoadSecondaryFont",aux) && aux)
-    secFont=frCB(1,fontW,fontH);
+ TScreenFont256 *useFont=NULL;
 
  /* Setting to fine tune this driver */
  aux=1;
@@ -928,23 +1388,133 @@ TScreenX11::TScreenX11()
  if (optSearch("DontResizeToCells",aux))
     dontResizeToCells=aux;
 
+ /* If the user wants Unicode mode try to load a proper font */
+ aux=0;
+ if (optSearch("Unicode16",aux) && aux)
+   {
+    aux=0;
+    if (optSearch("UseX11Fonts",aux) && aux)
+      {// Use X11 fonts for Unicode
+       char *x11FontName;
+       // First try with any font indicated by the user
+       char *tryX11Font=optSearch("X11Font");
+       x11FontName=SearchX11Font(tryX11Font);
+       if (!x11FontName)
+          // Search a suitable font of fontWxfonH size (+/- 1)
+          x11FontName=SearchX11Font("misc","fixed");
+       if (!x11FontName)
+          // If none found try with a more generic pattern
+          x11FontName=SearchX11Font("-*-*-*-r-*-*-*-*-*-*-c-*-iso10646-*");
+       if (!x11FontName)
+          // None usable ...
+          printf("No suitable X11 font found :-(\n");
+          // We will try using internal fonts.
+       else
+         {
+          printf("Best font: %s\n",x11FontName);
+          // Ask X to load the font and return info about it.
+          XFontStruct *fontInfo=XLoadQueryFont(disp,x11FontName);
+          if (fontInfo)
+            {
+             useX11Font=1;
+             drawingMode=unicode16;
+             x11Font=fontInfo->fid;
+             #if 0
+             x11FontOffset=fontInfo->max_bounds.ascent;
+             fontW=fontInfo->max_bounds.width;
+             fontH=x11FontOffset+fontInfo->max_bounds.descent;
+             #else
+             x11FontOffset=fontInfo->ascent;
+             fontW=fontInfo->max_bounds.width;
+             fontH=x11FontOffset+fontInfo->descent;
+             #endif
+             printf("Font size: %dx%d\n",fontW,fontH);
+             printf("as: %d de: %d\n",fontInfo->max_bounds.ascent,fontInfo->max_bounds.descent);
+             printf("2: as: %d de: %d\n",fontInfo->ascent,fontInfo->descent);
+            }
+          DeleteArray(x11FontName);
+         }
+      }
+    if (drawingMode!=unicode16)
+      {// Use our fonts but encoded using Unicode
+       tryUnicodeFont=optSearch("UnicodeFont");
+       LoadFontAsUnicode();
+      }
+   }
+
+ if (drawingMode!=unicode16)
+   {// Unicode16 not requested or just failed
+    // Do the work for internal code page fonts
+    if (fontW==10 || fontH==20)
+       defaultFont=&font10x20;
+    else
+       defaultFont=&font8x16;
+    freeFontData=1;
+    if (!frCB || !(useFont=frCB(0,fontW,fontH)))
+      {
+       useFont=defaultFont;
+       freeFontData=0;
+      }
+    fontW=useFont->w;
+    fontH=useFont->h;
+    fontWb=(useFont->w+7)/8;
+    fontSz=fontWb*fontH;
+    fontData=useFont->data;
+   
+    aux=0;
+    if (frCB && optSearch("LoadSecondaryFont",aux) && aux)
+       secFont=frCB(1,fontW,fontH);
+   }
+ if (0)
+   {
+    printf("Drawing mode: %s\n",drawingMode==unicode16 ? "Unicode 16" : "Code Page");
+    if (useX11Font)
+       printf("Using X11 fonts\n");
+   }
+
  TDisplayX11::Init();
 
  TScreen::clearScreen=clearScreen;
- TScreen::getCharacters=getCharacters;
- TScreen::getCharacter=getCharacter;
- TScreen::setCharacter=setCharacter;
- TScreen::setCharacters=setCharacters;
+ if (drawingMode==unicode16)
+   {
+    if (useX11Font)
+      {
+       //TScreen::setCharacter=setCharacterU16; Use Default
+       TScreen::setCharacters=setCharactersX11U16;
+       writeLine=writeLineX11U16;
+      }
+    else
+      {
+       TScreen::setCharacter=setCharacterU16;
+       TScreen::setCharacters=setCharactersU16;
+       writeLine=writeLineU16;
+      }
+    redrawBuf=redrawBufU16;
+   }
+ else
+   {
+    TScreen::setCharacter=setCharacter;
+    TScreen::setCharacters=setCharacters;
+    writeLine=writeLineCP;
+    redrawBuf=redrawBufCP;
+   }
  TScreen::System_p=System;
  TScreen::setWindowTitle=setWindowTitle;
  TScreen::getWindowTitle=getWindowTitle;
  TScreen::setDisPaletteColors=SetDisPaletteColors;
  TScreen::getFontGeometry=GetFontGeometry;
  TScreen::getFontGeometryRange=GetFontGeometryRange;
- TScreen::setFont_p=SetFont;
- TScreen::restoreFonts=RestoreFonts;
+ if (drawingMode==codepage)
+   {
+    TScreen::setFont_p=SetFont;
+    TScreen::restoreFonts=RestoreFonts;
+   }
  TScreen::setCrtModeRes_p=SetCrtModeRes;
  TDisplay::beep=Beep;
+ TScreen::openHelperApp=OpenHelperApp;
+ TScreen::closeHelperApp=CloseHelperApp;
+ TScreen::sendFileToHelper=SendFileToHelper;
+ TScreen::getHelperAppError=GetHelperAppError;
 
  TVX11Clipboard::Init();
  TGKeyX11::Init();
@@ -956,25 +1526,33 @@ TScreenX11::TScreenX11()
  setCrtData();
  startupCursor=cursorLines;
  startupMode=screenMode;
- screenBuffer=new ushort[screenWidth*screenHeight];
+ if (drawingMode==unicode16)
+    screenBuffer=new uint16[screenWidth*screenHeight*2];
+ else
+    screenBuffer=new uint16[screenWidth*screenHeight];
 
  /* Get screen and graphic context */
  screen=DefaultScreen(disp);
  gc=DefaultGC(disp,screen);
  visual=DefaultVisual(disp,screen);
+ if (useX11Font)
+    XSetFont(disp,gc,x11Font);
 
- /* Create what we'll use as font */
- CreateXImageFont(0,fontData,fontW,fontH);
- if (freeFontData)
-   {/* Provided by the call back */
-    DeleteArray(useFont->data);
-    delete useFont;
-   }
- if (secFont)
+ if (drawingMode==codepage)
    {
-    CreateXImageFont(1,secFont->data,fontW,fontH);
-    DeleteArray(secFont->data);
-    delete secFont;
+    /* Create what we'll use as font */
+    CreateXImageFont(0,fontData,fontW,fontH);
+    if (freeFontData)
+      {/* Provided by the call back */
+       DeleteArray(useFont->data);
+       delete useFont;
+      }
+    if (secFont)
+      {
+       CreateXImageFont(1,secFont->data,fontW,fontH);
+       DeleteArray(secFont->data);
+       delete secFont;
+      }
    }
 
  /* Create the cursor image */
@@ -1003,8 +1581,8 @@ TScreenX11::TScreenX11()
  char *s="Test";
  XStringListToTextProperty(&s,1,&name);*/
 
- classHint->res_name=(char *)"tvapp";   /* Take resources for tvapp */
- classHint->res_class=(char *)"XTVApp"; /* X Turbo Vision Application */
+ classHint->res_name=newStr("tvapp");   /* Take resources for tvapp */
+ classHint->res_class=newStr(windowClass); /* X Turbo Vision Application */
 
  /* Size hints are just hints, not all WM take care about them */
  sizeHints->flags=PResizeInc | PMinSize | PBaseSize;
@@ -1078,6 +1656,9 @@ TScreenX11::TScreenX11()
 
  /* A graphics context for the text cursor */
  cursorGC=XCreateGC(disp,mainWin,0,0);
+ if (useX11Font)
+    /* Select the same font for this context */
+    XSetFont(disp,cursorGC,x11Font);
 
  /* Create the cursor timer */
  gettimeofday(&refCursorTime,0);
@@ -1091,9 +1672,11 @@ TScreenX11::TScreenX11()
  // We can change the palette.
  // A redraw is needed after setting the palette. But currently is in the color setting.
  // We can set the fonts and even change their size.
- flags0=CanSetPalette | CanReadPalette | CodePageVar    | CursorShapes /*| PalNeedsRedraw*/ |
-        CanSetBFont   | CanSetSBFont   | CanSetFontSize | CanSetVideoSize |
-        NoUserScreen;
+ flags0=CanSetPalette   | CanReadPalette | CodePageVar | CursorShapes /*| PalNeedsRedraw*/ |
+        CanSetVideoSize | NoUserScreen;
+ if (drawingMode==codepage)
+    // We can't change the font when using Unicode16 mode
+    flags0|=CanSetBFont | CanSetSBFont | CanSetFontSize;
 
  if (createCursors())
     TScreen::showBusyState=ShowBusyState;
@@ -1219,12 +1802,31 @@ void TScreenX11::UnDrawCursor()
     return;
  SEMAPHORE_ON;
  unsigned offset=cursorX+cursorY*maxX;
- uchar *theChar=(uchar *)(screenBuffer+offset);
- uchar newChar=theChar[charPos];
- uchar newAttr=theChar[attrPos];
 
- XSetBgFgC(newAttr);
- drawChar(cursorGC,cursorX*fontW,cursorY*fontH,newChar,newAttr);
+ if (drawingMode==codepage)
+   {
+    uchar *theChar=(uchar *)(screenBuffer+offset);
+    uchar newChar=theChar[charPos];
+    uchar newAttr=theChar[attrPos];
+    XSetBgFgC(newAttr);
+    drawChar(cursorGC,cursorX*fontW,cursorY*fontH,newChar,newAttr);
+   }
+ else
+   {
+    if (useX11Font)
+      {
+       uint16 *buf=screenBuffer+offset*2;
+       writeLineX11U16(cursorX,cursorY,1,buf+charPos,buf[attrPos]);
+      }
+    else
+      {
+       uint16 *buf=screenBuffer+offset*2;
+       uchar newChar=buf[charPos];
+       uchar newAttr=buf[attrPos];
+       XSetBgFgC(newAttr);
+       drawCharU16(cursorGC,cursorX*fontW,cursorY*fontH,newChar);
+      }
+   }
  cursorInScreen=0;
  SEMAPHORE_OFF;
  return;
@@ -1234,6 +1836,8 @@ void TScreenX11::XSetBgFgC(uint16 attr)
 {
  int bg=attr>>4;
  int fg=attr & 0xF;
+ if (bg==fg)
+    fg=~bg & 0xF;
  XSetBackground(disp,cursorGC,colorMap[bg]);
  XSetForeground(disp,cursorGC,colorMap[fg]);
 }
@@ -1256,12 +1860,40 @@ void TScreenX11::DrawCursor()
 
     /* Create an image with the character under cursor */
     unsigned offset=cursorX+cursorY*maxX;
-    uchar *theChar=(uchar *)(screenBuffer+offset);
-    int attr=theChar[attrPos];
+    int attr;
+    if (drawingMode==codepage)
+      {
+       uchar *theChar=(uchar *)(screenBuffer+offset);
+       attr=theChar[attrPos];
+       memcpy(cursorData,useSecondaryFont && (attr & 8) ?
+              ximgSecFont[theChar[charPos]]->data :
+              ximgFont[theChar[charPos]]->data,fontSz);
+      }
+    else
+      {
+       uint16 *buf=screenBuffer+offset*2;
+       attr=buf[attrPos];
+       if (useX11Font)
+         {
+          writeLineX11U16(cursorX,cursorY,1,buf,attr);
+          if (cursorInScreen)
+            {
+             XSetBgFgC(attr);
+             int y;
+             for (y=cShapeFrom; y<cShapeTo; y++)
+                 XDrawLine(disp,mainWin,cursorGC,cursorPX,cursorPY+y,cursorPX+fontW-1,cursorPY+y);
+            }
+          XFlush(disp);
+          SEMAPHORE_OFF;
+          return;
+         }
+       else
+         {
+          uint16 code=unicode2index(buf[charPos]);
+          memcpy(cursorData,glyphs+code*fontSz,fontSz);
+         }
+      }
     XSetBgFgC(attr);
-    memcpy(cursorData,useSecondaryFont && (attr & 8) ?
-           ximgSecFont[theChar[charPos]]->data :
-           ximgFont[theChar[charPos]]->data,fontSz);
 
     //fprintf(stderr,"DrawCursor: cursorInScreen=%d from/to %d/%d\n",cursorInScreen,cShapeFrom,cShapeTo);
     /* If the cursor is on draw it over the character */
@@ -1315,7 +1947,6 @@ void TScreenX11::ProcessGenericEvents()
  // Current time
  gettimeofday(&curCursorTime,0);
  // Substract the reference
- curCursorTime.tv_sec-=refCursorTime.tv_sec;
  SubstractRef(curCursorTime,refCursorTime);
 
  if (curCursorTime.tv_sec>0 || curCursorTime.tv_usec>cursorDelay)
@@ -1464,7 +2095,7 @@ void TScreenX11::ProcessGenericEvents()
  SEMAPHORE_OFF;
 }
 
-void TScreenX11::writeLine(int x, int y, int w, unsigned char *str, unsigned color)
+void TScreenX11::writeLineCP(int x, int y, int w, void *s, unsigned color)
 {
  if (w<=0)
     return; // Nothing to do
@@ -1474,6 +2105,7 @@ void TScreenX11::writeLine(int x, int y, int w, unsigned char *str, unsigned col
  x*=fontW; y*=fontH;
  UnDrawCursor();
  XImage **f=(useSecondaryFont && (color & 8)) ? ximgSecFont : ximgFont;
+ uchar *str=(uchar *)s;
  while (w--)
    {
     XPutImage(disp,mainWin,gc,f[*str],0,0,x,y,fontW,fontH);
@@ -1483,7 +2115,7 @@ void TScreenX11::writeLine(int x, int y, int w, unsigned char *str, unsigned col
  SEMAPHORE_OFF;
 }
 
-void TScreenX11::redrawBuf(int x, int y, unsigned w, unsigned off)
+void TScreenX11::redrawBufCP(int x, int y, unsigned w, unsigned off)
 {
  int len   = 0;         /* longitud a escribir */
  int letra = 0;
@@ -1507,7 +2139,7 @@ void TScreenX11::redrawBuf(int x, int y, unsigned w, unsigned off)
       {
        if (last>=0)
          {
-          writeLine(x,y,len,(uchar *)tmp,last);  // Print last same color block
+          writeLine(x,y,len,tmp,last);  // Print last same color block
           dst=(uchar *)tmp; x+=len; len=0;
          }
        last=color;
@@ -1515,7 +2147,58 @@ void TScreenX11::redrawBuf(int x, int y, unsigned w, unsigned off)
     *dst++=letra; b+=2; len++;
    }
   
- writeLine(x,y,len,(uchar *)tmp,color);          // Print last block
+ writeLine(x,y,len,tmp,color);          // Print last block
+}
+
+void TScreenX11::writeLineU16(int x, int y, int w, void *s, unsigned color)
+{
+ if (w<=0)
+    return; // Nothing to do
+
+ SEMAPHORE_ON;
+ XSetBgFg(color);
+ x*=fontW; y*=fontH;
+ UnDrawCursor();
+ uint16 *str=(uint16 *)s;
+ while (w--)
+   {
+    uint16 code=unicode2index(*str);
+    checkUnicodeGlyph(code);
+    XPutImage(disp,mainWin,gc,unicodeGlyphs[code],0,0,x,y,fontW,fontH);
+    str++;
+    x+=fontW;
+   }
+ SEMAPHORE_OFF;
+}
+
+void TScreenX11::redrawBufU16(int x, int y, unsigned w, unsigned off)
+{
+ int len   = 0;         /* longitud a escribir */
+ int letra = 0;
+ int color = 0;
+ int last  = -1;
+ AllocLocalUShort(tmp,w*2);
+ uint16 *dst=tmp;
+ uint16 *b=screenBuffer+off*2;
+
+ while (w--)
+   {
+    letra=b[charPos];
+    color=b[attrPos];
+    
+    if (color!=last)
+      {
+       if (last>=0)
+         {
+          writeLine(x,y,len,tmp,last);
+          dst=tmp; x+=len; len=0;
+         }
+       last=color;
+      }
+    *dst++=letra; b+=2; len++;
+   }
+  
+ writeLine(x,y,len,tmp,color);
 }
 
 TScreen *TV_XDriverCheck()
@@ -2024,38 +2707,31 @@ Boolean TScreenX11::createCursors()
                                                      busyCursorWidth,busyCursorHeight,
                                                      BlackPixel(disp,screen),
                                                      WhitePixel(disp,screen),1);
-    if (busyCursorPixmapMask==None)
+    int ok=0;
+    if (busyCursorPixmapMask!=None)
       {
-       XFreePixmap(disp,busyCursorPixmap);
-       return False;
-      }
-   
-    XColor busyCursorFg, busyCursorBg;
-    Status status;
-    
-    status=XAllocNamedColor(disp,DefaultColormap(disp,DefaultScreen(disp)),
-                            "black",&busyCursorFg,&busyCursorFg);
-    if (!status)
-      {
-       XFreePixmap(disp,busyCursorPixmap);
+       XColor busyCursorFg, busyCursorBg;
+       Status status;
+       
+       status=XAllocNamedColor(disp,DefaultColormap(disp,DefaultScreen(disp)),
+                               "black",&busyCursorFg,&busyCursorFg);
+       if (status)
+         {
+          status=XAllocNamedColor(disp,DefaultColormap(disp,DefaultScreen(disp)),
+                                  "white",&busyCursorBg,&busyCursorBg);
+          if (status)
+            {
+             busyCursor=XCreatePixmapCursor(disp,busyCursorPixmap,busyCursorPixmapMask,
+                                            &busyCursorFg,&busyCursorBg,1,1);
+             ok=1;
+            }
+         }
        XFreePixmap(disp,busyCursorPixmapMask);
-       return False;
       }
-   
-    status=XAllocNamedColor(disp,DefaultColormap(disp,DefaultScreen(disp)),
-                            "white",&busyCursorBg,&busyCursorBg);
-    if (!status)
-      {
-       XFreePixmap(disp,busyCursorPixmap);
-       XFreePixmap(disp,busyCursorPixmapMask);
-       return False;
-      }
-   
-    busyCursor=XCreatePixmapCursor(disp,busyCursorPixmap,busyCursorPixmapMask,
-                                   &busyCursorFg,&busyCursorBg,1,1);
-   
     XFreePixmap(disp,busyCursorPixmap);
-    XFreePixmap(disp,busyCursorPixmapMask);
+
+    if (!ok)
+       return False;
    }
  else
     busyCursor=XCreateFontCursor(disp,XC_watch);
@@ -2083,6 +2759,259 @@ void TScreenX11::Beep()
  XBell(disp,50);
  SEMAPHORE_OFF;
 }
+
+/*****************************************************************************
+  Application Helpers
+*****************************************************************************/
+
+const char *TScreenX11::appHelperNameError[]=
+{
+ __("No error"), // 0
+ __("Only one helper of this kind can be opened at the same time"), // 1
+ __("Please install gqview application in order to display images"), // 2
+ __("Please install xpdf application in order to display PDF files"), // 3
+ __("Invalid application helper handler"), // 4
+ __("Failed to open /dev/null"), // 5
+ __("No more handlers") // 6
+};
+int TScreenX11::appHelperError=0;
+TNSCollection *TScreenX11::appHelperHandlers=NULL;
+struct helperHandler
+{
+ TScreen::AppHelper kind;
+ pid_t pid;
+};
+static int allocatedHandlers;
+
+static
+Boolean CheckInstalled(const char *command, const char *response,
+                       Boolean installed)
+{
+ if (installed)
+    return installed;
+ // Redirect stderr and stdout to a file
+ char name[14]="/tmp/tvXXXXXX";
+ int handler=mkstemp(name);
+ if (handler==-1)
+    return False;
+ unlink(name);
+ int h_errbak=dup(STDERR_FILENO);
+ int h_outbak=dup(STDOUT_FILENO);
+ dup2(handler,STDERR_FILENO);
+ dup2(handler,STDOUT_FILENO);
+ // Run the command
+ TScreen::System(command);
+ // Restore stderr and stdout
+ dup2(h_errbak,STDERR_FILENO);
+ dup2(h_outbak,STDOUT_FILENO);
+ close(h_errbak);
+ close(h_outbak);
+ // Read the result
+ lseek(handler,0,SEEK_SET);
+ char resp[80];
+ read(handler,resp,80);
+ close(handler);
+ // Is that ok?
+ return Boolean(strstr(resp,response)!=NULL);
+}
+
+TScreen::appHelperHandler TScreenX11::OpenHelperApp(TScreen::AppHelper kind)
+{
+ static Boolean gqviewInstalled=False;
+ static Boolean xpdfInstalled=False;
+
+ if (kind==FreeHandler)
+   {
+    appHelperError=4;
+    return -1;
+   }
+
+ if (kind==ImageViewer && appHelperHandlers)
+   {// Only one image viewer (gqview limitation)
+    ccIndex i, c=appHelperHandlers->getCount();
+    for (i=0; i<c; i++)
+       {
+        helperHandler *p=(helperHandler *)appHelperHandlers->at(i);
+        if (p->kind==ImageViewer)
+          {
+           appHelperError=1;
+           return -1;
+          }
+       }
+   }
+
+ // Ensure we have a collection
+ if (!appHelperHandlers)
+   {
+    appHelperHandlers=new TNSCollection(maxAppHelperHandlers,2);
+    allocatedHandlers=maxAppHelperHandlers;
+   }
+ if (!appHelperHandlers)
+    return -1;
+
+ // Do we have available handlers?
+ ccIndex hNum=-1;
+ if (appHelperHandlers->getCount()>=allocatedHandlers)
+   {
+    ccIndex i, c=appHelperHandlers->getCount();
+    for (i=0; i<c; i++)
+       {
+        helperHandler *p=(helperHandler *)appHelperHandlers->at(i);
+        if (p->kind==FreeHandler)
+          {
+           hNum=i;
+           break;
+          }
+       }
+    if (i==c)
+      {
+       appHelperError=6;
+       return -1;
+      }
+   }
+
+ // Create/Recycle the structure
+ helperHandler *h;
+
+ if (hNum==-1)
+   {// Create a struct for it
+    h=(helperHandler *)(new char[sizeof(helperHandler)]); // To match the delete[]
+    h->kind=FreeHandler;
+    // Insert it
+    hNum=appHelperHandlers->insert(h);
+   }
+ else
+    // Recycle
+    h=(helperHandler *)appHelperHandlers->at(hNum);
+
+ // Open the remote server
+ int nullH=open("/dev/null",O_WRONLY|O_BINARY|O_CREAT|O_TRUNC,S_IREAD|S_IWRITE);
+ if (nullH==-1)
+   {
+    appHelperError=5;
+    return -1;
+   }
+ switch (kind)
+   {
+    case ImageViewer:
+         gqviewInstalled=CheckInstalled("gqview -v","GQview",gqviewInstalled);
+         if (!gqviewInstalled)
+           {
+            appHelperError=2;
+            return -1;
+           }
+         break;
+    case PDFViewer:
+         xpdfInstalled=CheckInstalled("xpdf -v","xpdf version",xpdfInstalled);
+         if (!xpdfInstalled)
+           {
+            appHelperError=3;
+            return -1;
+           }
+         break;
+    case FreeHandler:
+         break;
+   }
+ close(nullH);
+ h->kind=kind;
+ h->pid=0;
+
+ return hNum;
+}
+
+Boolean TScreenX11::CloseHelperApp(appHelperHandler id)
+{
+ if (!appHelperHandlers || id<0 || id>=appHelperHandlers->getCount())
+   {
+    appHelperError=4;
+    return False;
+   }
+
+ char buf[80];
+ int nullH=open("/dev/null",O_WRONLY|O_BINARY|O_CREAT|O_TRUNC,S_IREAD|S_IWRITE);
+ if (nullH==-1)
+   {
+    appHelperError=5;
+    return -1;
+   }
+
+ helperHandler *p=(helperHandler *)appHelperHandlers->at(id);
+ int status;
+ if (p->pid && waitpid(p->pid,&status,WNOHANG)==p->pid)
+    p->pid=0;
+ switch (p->kind)
+   {
+    case ImageViewer:
+         System("gqview -r -q",&p->pid,-1,nullH,nullH);
+         break;
+    case PDFViewer:
+         CLY_snprintf(buf,80,"xpdf -remote SETEdit_%d_%d -quit",(int)getpid(),id);
+         System(buf,&p->pid,-1,nullH,nullH);
+         break;
+    case FreeHandler:
+         appHelperError=4;
+         return False;
+   }
+
+ close(nullH);
+ p->kind=FreeHandler;
+ p->pid=0;
+
+ return True;
+}
+
+Boolean TScreenX11::SendFileToHelper(appHelperHandler id, const char *file,
+                                     void *extra)
+{
+ if (!appHelperHandlers || id<0 || id>=appHelperHandlers->getCount())
+   {
+    appHelperError=4;
+    return False;
+   }
+
+ int len=160+strlen(file);
+ int page;
+ AllocLocalStr(buf,len);
+ int nullH=open("/dev/null",O_WRONLY|O_BINARY|O_CREAT|O_TRUNC,S_IREAD|S_IWRITE);
+ if (nullH==-1)
+   {
+    appHelperError=5;
+    return -1;
+   }
+
+ helperHandler *p=(helperHandler *)appHelperHandlers->at(id);
+ int status;
+ if (p->pid && waitpid(p->pid,&status,WNOHANG)==p->pid)
+    p->pid=0;
+ switch (p->kind)
+   {
+    case ImageViewer:
+         CLY_snprintf(buf,len,"gqview -r \"file:%s\"",file);
+         System(buf,&p->pid,-1,nullH,nullH);
+         break;
+    case PDFViewer:
+         page=0;
+         if (extra)
+            page=*((int *)extra);
+         CLY_snprintf(buf,len,"xpdf -remote SETEdit_%d_%d -raise \"%s\" %d",
+                      (int)getpid(),id,file,page);
+         System(buf,&p->pid,-1,nullH,nullH);
+         break;
+    case FreeHandler:
+         appHelperError=4;
+         return False;
+   }
+
+ close(nullH);
+
+ return True;
+}
+
+const char *TScreenX11::GetHelperAppError()
+{
+ return appHelperNameError[appHelperError];
+}
+
 
 /*****************************************************************************
 
@@ -2154,6 +3083,11 @@ static volatile int safeToUnHook;
 
 void TVX11UpdateThread::UpdateThread(int signum)
 {
+ if (!running)
+   {
+    safeToUnHook=1;
+    return;
+   }
  // Here TIMER_ALARM signal is blocked and the process can take the CPU
  if (!mutex)
    {// No mutex, we can do our work.
@@ -2165,15 +3099,13 @@ void TVX11UpdateThread::UpdateThread(int signum)
     if (updates>250)
       {
        printf("Tic (%d)\n",getpid());
+       // Dump stats about fully skipped draws
+       printf("setCharacter: %d/%d\n",statSCs,statSCt);
+       printf("setCharacters: %d/%d\n",statSCSs,statSCSt);
        updates=0;
       }
    }
- if (running)
-   {// We still running, set the timer again
-    microAlarm(refreshTime);
-   }
- else
-    safeToUnHook=1;
+ microAlarm(refreshTime);
 }
 
 void TVX11UpdateThread::StartUpdateThread()

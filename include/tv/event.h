@@ -23,7 +23,7 @@ struct MouseEventType
 // be used directly. You should use TMouse instead which is derived from
 // it. That's why most members are protected.
 // See thwmouse.cc
-class THWMouse
+class CLY_EXPORT THWMouse
 {
 protected:
  THWMouse();
@@ -108,7 +108,7 @@ inline void THWMouse::inhibit()
 }
 
 // This class exposses the mouse interface.
-class TMouse : public THWMouse
+class CLY_EXPORT TMouse : public THWMouse
 {
 public:
  TMouse();
@@ -183,16 +183,18 @@ inline unsigned TMouse::getDrawCounter()
 
 struct CharScanType
 {
- uchar charCode;
+ uchar charCode;        // The character encoded in the application code page
  uchar scanCode;
 };
 
 struct KeyDownEvent
 {
  CharScanType charScan;
- ushort keyCode;
+ ushort keyCode;        // Internal code, used for special keys (i.e. arrows)
  ushort shiftState;
- uchar raw_scanCode;
+ uchar  raw_scanCode;
+ uint32 charCode;       // The Unicode16 of the key when the driver is in
+                        // Unicode16 mode. 0xFFFF if no character is associated.
 };
 
 struct MessageEvent
@@ -203,7 +205,7 @@ struct MessageEvent
         void *infoPtr;
         long infoLong;
         ushort infoWord;
-	short infoInt;
+        short infoInt;
         uchar infoByte;
         char infoChar;
         };
@@ -216,7 +218,7 @@ struct TEvent
     {
         MouseEventType mouse;
         KeyDownEvent keyDown;
-	MessageEvent message;
+        MessageEvent message;
     };
     void getMouseEvent();
     void getKeyEvent();

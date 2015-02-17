@@ -9,7 +9,8 @@
  * SET: Moved the standard headers here because according to DJ
  * they can inconditionally declare symbols like NULL.
  * Reworked code for endian stuff (readShort, readInt, readLong, read8,
- * read16, read32 and read64)
+ * read16, read32 and read64).
+ * Added 16 bit strings read members.
  *
  * Modified to compile with gcc v3.x by Salvador E. Tropea, with the help of
  * Andris Pavenis and Christoph Bauer.
@@ -19,6 +20,7 @@
  */
 #include <assert.h>
 #define Uses_string
+#define Uses_stdio // EOF
 #define Uses_TStreamable
 #define Uses_TStreamableClass
 #define Uses_TStreamableTypes
@@ -27,8 +29,6 @@
 #define Uses_TPReadObjects
 #define Uses_PubStreamBuf
 #include <tv.h>
-
-#include <stdio.h>
 
 ipstream::ipstream( CLY_streambuf *sb )
 {
@@ -153,18 +153,20 @@ DefineRead(64,uint64);
 
 void ipstream::readBytes( void *data, size_t sz )
 {
-    // Added modified code by V. Bugrov here.
     size_t i = bp->sgetn( (char *)data, sz );
     if (i < sz)
+      {
        setstate(CLY_IOSEOFBit);
+       // SET: Fill with 0s. Avoid using unitialized memory.
+       memset( ((char *)data) + i, 0, sz - i);
+      }
 }
 
 char *ipstream::readString()
 {
-    uchar _len = readByte();
-    if( _len == 0xFF )
+    int len = readByte();
+    if( len == 0xFF )
         return 0;
-    int len = _len;
     if( len == 0xfe )
         // SET: Read a fixed ammount of bytes in all platforms
         len = read32();
@@ -191,9 +193,42 @@ char *ipstream::readString( char *buf, unsigned maxLen )
     return buf;
 }
 
+uint16 *ipstream::readString16()
+{
+    int len = readByte();
+    if( len == 0xFF )
+        return 0;
+    if( len == 0xfe )
+        len = read32();
+    uint16 *buf = new uint16[len+1];
+    if( buf == 0 )
+        return 0;
+    readBytes( buf, len*2 );
+    buf[len] = EOS;
+    return buf;
+}
+
+uint16 *ipstream::readString16( uint16 *buf, unsigned maxLen )
+{
+    assert( buf != 0 );
+    uint16 *tmp = readString16();
+    if (tmp)
+    {
+      maxLen--;
+      unsigned i;
+      for (i=0; tmp[i] && i<maxLen; i++)
+          buf[i] = tmp[i];
+      buf[maxLen] = 0;
+      delete [] tmp;
+    }
+    else
+      *buf = 0;
+    return buf;
+}
+
 /* Operators moved to headers by JASC */
 
-ipstream& operator >> ( ipstream& ps, TStreamable& t )
+CLY_EXPORT ipstream& operator >> ( ipstream& ps, TStreamable& t )
 {
     const TStreamableClass *pc = ps.readPrefix();
     ps.readData( pc, &t );
@@ -201,7 +236,7 @@ ipstream& operator >> ( ipstream& ps, TStreamable& t )
     return ps;
 }
 
-ipstream& operator >> ( ipstream& ps, void *&t )
+CLY_EXPORT ipstream& operator >> ( ipstream& ps, void *&t )
 {
     char ch = ps.readByte();
     switch( ch )
@@ -244,7 +279,9 @@ const TStreamableClass *ipstream::readPrefix()
 
     char name[128];
     readString( name, sizeof name );
-    return types->lookup( name );
+    const TStreamableClass *ret = types->lookup( name );
+    assert( ret != NULL );
+    return ret;
 }
 
 void *ipstream::readData( const TStreamableClass *c, TStreamable *mem )
