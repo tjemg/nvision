@@ -1,0 +1,126 @@
+.topic Nocontext=0
+
+ ษออออออออออออออออออป
+ บ Test Help System บ
+ ศออออออออออออออออออผ
+To create the boxes, use the IBM extended characters.  Generate
+these characters by pressing 'Alt keycode,' for instance: to
+generate ป hold down the Alt key and press (on the numeric key
+pad) 187, then release the Alt key.
+
+Short cut:
+ Notice .topic NoContext=0 and .topic Edit=1100 are the only
+ explicit assignments in this help file.  TVHC (Turbo Vision
+ Help Compiler) will automatically assign values to all other
+ topic contexts.  These values are placed into a XXXX.h file
+ which should be placed into your source file.  Thus, future
+ changes to the help file will only require recompiling the
+ help file and application, and no explicit changes to the
+ source code will be necessary.
+
+  Operations
+  ฿฿฿฿฿฿฿฿฿฿
+
+      {Edit}
+      {File Stuff:File}
+      {Exit}
+
+
+.topic Edit=1000
+
+ ษออออออออออออออป
+ บ Edit Control บ
+ ศออออออออออออออผ
+
+This is where you tell your users how to edit a file.
+
+
+
+
+.topic File
+
+ ษออออออออออออออป
+ บ File Control บ
+ ศออออออออออออออผ
+
+ File Operations:
+
+       {Open}
+       {Close}
+       {Save}
+       {What ever:What}
+
+
+.topic Exit
+
+ ษออออออป
+ บ Exit บ
+ ศออออออผ
+
+Use Alt-X to exit the testhelp.
+
+
+
+.topic Open
+
+Open a file with the open command.
+
+
+.topic Close
+
+Close a file to close it.
+
+
+.topic Save
+
+Save a file to save it.
+
+
+.topic What
+
+To do whatever to a file, talk about it here.
+
+
+.topic About
+
+TestHelp About
+
+.topic Test
+
+This is a Test
+
+.topic Hello
+
+Hello World, Help!
+
+
+.topic AboutRadio
+
+Help for RadioButton ONE.
+
+.topic radio2
+
+Help for RadioButton TWO.
+
+.topic radio3
+
+Help for RadioButton THREE.
+
+.topic radio4
+
+Help for RadioButton FOUR.
+
+.topic AboutBox
+
+You are now in the TestHelp about box.  Turbo Vision knows this
+because the TApplication::getEvent is overloaded and events can
+be captured from any view... including this dialog box.
+
+
+.topic EndStandard
+
+****************************************************************
+this is the dummy help context which is the end of standard help.
+****************************************************************
+
+
