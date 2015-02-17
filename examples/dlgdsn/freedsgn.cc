@@ -243,6 +243,7 @@ void TFreeDsgnApp::handleEvent(TEvent& event)
            r.length = strlen(r.buffer);
            viewBuffer(r);
            break;
+
         case cmSave:
            if (srcWindow)
            {

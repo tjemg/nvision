@@ -26,104 +26,105 @@
 typedef char TNameStr[MAX_LABEL_LENGTH];
 typedef char TTitleStr[MAX_TITLE_LENGTH];
 
-typedef struct TPoint;
+struct TPoint;
 
 #define _viewdata_() \
-   TPoint origin;       /*   8 */ \
-   TPoint size;         /*   8 */ \
-   TNameStr className;  /*  30 */ \
-   TNameStr thisName;   /*  30 */ \
-   ushort options;      /*   2 */ \
-   ushort eventMask;    /*   2 */ \
-   ushort state;        /*   2 */ \
-   ushort growMode;     /*   2 */ \
-   ushort dragMode;     /*   2 */ \
-   ushort helpCtx       /*   2 */ \
-//                          88 % 4 = 0
-typedef struct TDefaultData
+TPoint origin;       /*   8 */ \
+TPoint size;         /*   8 */ \
+TNameStr className;  /*  30 */ \
+TNameStr thisName;   /*  30 */ \
+ushort options;      /*   2 */ \
+ushort eventMask;    /*   2 */ \
+ushort state;        /*   2 */ \
+ushort growMode;     /*   2 */ \
+ushort dragMode;     /*   2 */ \
+ushort helpCtx       /*   2 */ \
+//                    88 % 4 = 0
+
+struct TDefaultData
 {
-   ushort options;
-   ushort eventMask;
-   ushort state;
-   ushort growMode;
-   ushort dragMode;
-   ushort helpCtx;
-   ushort flags;
+    ushort options;
+    ushort eventMask;
+    ushort state;
+    ushort growMode;
+    ushort dragMode;
+    ushort helpCtx;
+    ushort flags;
 };
 
-typedef struct TViewData // Wrapper struct
+struct TViewData // Wrapper struct
 {
-  _viewdata_();
+    _viewdata_();
 };
 
-typedef struct TDsgObjData
+struct TDsgObjData
 {
-  _viewdata_();
-  int tabOrder;
+    _viewdata_();
+    int tabOrder;
 };
 
-typedef struct TDDialogData
+struct TDDialogData
 {
-  _viewdata_();
-  TTitleStr title;
-  ushort flags;
+    _viewdata_();
+    TTitleStr title;
+    ushort flags;
 };
 
-typedef struct TDInputData
+struct TDInputData
 {
-   _viewdata_();
-   int tabOrder;
-   int maxLen;
-   ushort validatorType;
-   TNameStr validatorData;
+    _viewdata_();
+    int tabOrder;
+    int maxLen;
+    ushort validatorType;
+    TNameStr validatorData;
 };
 
-typedef struct TDLabelData
+struct TDLabelData
 {
-   _viewdata_();
-   TNameStr text;
-   TNameStr link;
+    _viewdata_();
+    TNameStr text;
+    TNameStr link;
 };
 
-typedef struct TDMemoData
+struct TDMemoData
 {
-   _viewdata_();
-   int tabOrder;
-// uint32 bufSize;
-// TNameStr Indicator;
-   TNameStr hScroll;
-   TNameStr vScroll;
-   uint32 bufSize;
+    _viewdata_();
+    int tabOrder;
+    // uint32 bufSize;
+    // TNameStr Indicator;
+    TNameStr hScroll;
+    TNameStr vScroll;
+    uint32 bufSize;
 };
 
-typedef struct TDStaticData
+struct TDStaticData
 {
-   _viewdata_();
-   char * text;
+    _viewdata_();
+    char * text;
 };
 
-typedef struct TDButtonData
+struct TDButtonData
 {
-   _viewdata_();
-   int tabOrder;
-   TNameStr title;
-   ushort command;
-   ushort flags;
+    _viewdata_();
+    int tabOrder;
+    TNameStr title;
+    ushort command;
+    ushort flags;
 };
 
-typedef struct TDClusterData
+struct TDClusterData
 {
-   _viewdata_();
-   int tabOrder;
-   void * items;
+    _viewdata_();
+    int tabOrder;
+    void * items;
 };
 
-typedef struct TDListBoxData
+struct TDListBoxData
 {
-   _viewdata_();
-   int tabOrder;
-   short columns;
-   TNameStr scrollBar;
+    _viewdata_();
+    int tabOrder;
+    short columns;
+    TNameStr scrollBar;
 };
 
 #define TDCheckData    TDClusterData

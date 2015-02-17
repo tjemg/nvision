@@ -9,6 +9,10 @@
     Heavily modified by Salvador E. Tropea to compile without warnings.
     Some warnings were in fact bugs.
     For gcc 2.95.x and then 3.0.1.
+
+    Feb 2015, Further modifications by Tiago Gasiba
+        + Lots of bugfixes and cleanup of warnings
+        + Compiles with gcc 4.9.2
     
  ***************************************************************************/
 
@@ -57,18 +61,18 @@ static int vtAttrSize[vtDialog + 1] = { sizeof(TDsgObjData),
                                         sizeof(TViewData),
                                         sizeof(TDDialogData) };
                                         
-static char * TheClassName[vtDialog + 1] = { "TUser",
-                                             "TLabel",
-                                             "TInputLine",
-                                             "TMemo",
-                                             "TStaticText",
-                                             "TButton",
-                                             "TListBox",
-                                             "TRadioButtons",
-                                             "TCheckBoxes",
-                                             "TScrollBar",
-                                             "TScrollBar",
-                                             "TDialog" };
+const char * TheClassName[vtDialog + 1] = { "TUser",
+                                            "TLabel",
+                                            "TInputLine",
+                                            "TMemo",
+                                            "TStaticText",
+                                            "TButton",
+                                            "TListBox",
+                                            "TRadioButtons",
+                                            "TCheckBoxes",
+                                            "TScrollBar",
+                                            "TScrollBar",
+                                            "TDialog" };
 
 
 #if 0 // A useful visual map of AppPalette indexed by dialog and app
@@ -171,9 +175,9 @@ static char * TheClassName[vtDialog + 1] = { "TUser",
 // Static *******************************************************************
 
 // This always points to Current Tool Dialog and Editor Dialog
-static TDDialog * EditDlg;
-static TDialog * ToolDlg;
-static TObjEdit * ObjEdit;
+static TDDialog *EditDlg;
+static TDialog  *ToolDlg;
+static TObjEdit *ObjEdit;
 
 // To help keyboard driven object positionment
 static TView * FloatingView;
@@ -219,37 +223,37 @@ bool GetGrid()
 // ToolDlg (Object Dialog) creation function
 TDialog * CreateTool()
 {
-   TDialog * d = new TDialog(TRect(0, 0, 55, 6), "Obj");
-   TDMemo * Memo;
-   TDListBox * LB;
-   TView * view;
-   TMemoData buf;
+    TDialog * d = new TDialog(TRect(0, 0, 55, 6), "Obj");
+    TDMemo * Memo;
+    TDListBox * LB;
+    TView * view;
+    TMemoData buf;
 
-   d->flags &= ~wfClose;
-   // d->flags |= wfGrow;
-   d->insert(new TDInputLine(TRect(2, 1, 7, 2)));
-   d->insert(view = new TDLabel(TRect(8, 1, 13, 2)));
-   view->options |= ofSelectable;
-   d->insert(view = new TDStaticText(TRect(2, 3, 7, 4)));
-   view->options |= ofSelectable;
-   d->insert(new TDButton(TRect(7, 3, 13, 5)));
-   d->insert(new TDCheckBoxes(TRect(15, 1, 20, 2), new TSItem("", 0) ));
-   d->insert(new TDRadioButtons(TRect(15, 3, 20, 4), new TSItem("", 0) ));
-   d->insert(LB = new TDListBox(TRect(22, 1, 27, 4)));
-   d->insert(view = new TVScrollBar(TRect(28, 1, 29, 4)));
-   view->options |= ofSelectable;
-   view->growMode = 0;
-   d->insert(Memo = new TDMemo(TRect(31, 1, 37, 2)));
-   buf.length = 6;
-   strcpy(buf.buffer, " Memo ");
-   Memo->setData(&buf);
-   Memo->growMode = 0;
-   d->insert(view = new THScrollBar(TRect(31, 3, 37, 4)));
-   view->options |= ofSelectable;
-   view->select();
-   view->growMode = 0;
-   d->selectNext(False);
-   return d;
+    d->flags &= ~wfClose;
+    // d->flags |= wfGrow;
+    d->insert(new TDInputLine(TRect(2, 1, 7, 2)));
+    d->insert(view = new TDLabel(TRect(8, 1, 13, 2)));
+    view->options |= ofSelectable;
+    d->insert(view = new TDStaticText(TRect(2, 3, 7, 4)));
+    view->options |= ofSelectable;
+    d->insert(new TDButton(TRect(7, 3, 13, 5)));
+    d->insert(new TDCheckBoxes(TRect(15, 1, 20, 2), new TSItem("", 0) ));
+    d->insert(new TDRadioButtons(TRect(15, 3, 20, 4), new TSItem("", 0) ));
+    d->insert(LB = new TDListBox(TRect(22, 1, 27, 4)));
+    d->insert(view = new TVScrollBar(TRect(28, 1, 29, 4)));
+    view->options |= ofSelectable;
+    view->growMode = 0;
+    d->insert(Memo = new TDMemo(TRect(31, 1, 37, 2)));
+    buf.length = 6;
+    strcpy(buf.buffer, " Memo ");
+//    Memo->setData(&buf);
+    Memo->growMode = 0;
+    d->insert(view = new THScrollBar(TRect(31, 3, 37, 4)));
+    view->options |= ofSelectable;
+    view->select();
+    view->growMode = 0;
+    d->selectNext(False);
+    return d;
 }
 
 // Called to initialize the editor. if FileName = NULL creates a blank dialog
@@ -296,58 +300,82 @@ TWindow * ObjectEditor() { return ObjEdit; }
 
 /* DefineRect ------------------------------------------------------------*/
 // returns the initial bounds rect for each type of view
-TRect DefineRect(TViewType vt, TPoint p)
-{
-   switch(vt)
-   {
-      case vtLabel: return TRect(p.x, p.y, p.x + 7, p.y + 1);
-      case vtInput: return TRect(p.x, p.y, p.x + 10, p.y + 1);
-      case vtStatic: return TRect(p.x, p.y, p.x + 12, p.y + 1);
-      case vtButton: return TRect(p.x, p.y, p.x + 12, p.y + 2);
-      case vtVScroll: return TRect(p.x, p.y, p.x + 1, p.y + 5);
-      case vtHScroll: return TRect(p.x, p.y, p.x + 10, p.y + 1);
-      default: return TRect(p.x, p.y, p.x + 10, p.y + 3);
-   }
+TRect DefineRect(TViewType vt, TPoint p) {
+    switch(vt) {
+        case vtLabel:
+            return TRect(p.x, p.y, p.x + 7, p.y + 1);
+
+        case vtInput:
+            return TRect(p.x, p.y, p.x + 10, p.y + 1);
+
+        case vtStatic:
+            return TRect(p.x, p.y, p.x + 12, p.y + 1);
+
+        case vtButton:
+            return TRect(p.x, p.y, p.x + 12, p.y + 2);
+
+        case vtVScroll:
+            return TRect(p.x, p.y, p.x + 1, p.y + 5);
+
+        case vtHScroll:
+            return TRect(p.x, p.y, p.x + 10, p.y + 1);
+
+        default:
+            return TRect(p.x, p.y, p.x + 10, p.y + 3);
+    }
 }
 
 /* GetSizeLimits ---------------------------------------------------------*/
 // returns the size limits for each type of view
-void GetSizeLimits(TPoint& min, TPoint& max, TViewType vt)
-{
-   max.x = max.y = INT_MAX;
-   switch(vt)
-   {
-      case vtButton: min.x = 5; min.y = 2; break;
-      case vtVScroll: min.x = 1; min.y = 3; break;
-      case vtHScroll: min.x = 3; min.y = 1; break;
-      default: min.x = 3; min.y = 1;
-   }
+void GetSizeLimits(TPoint& min, TPoint& max, TViewType vt) {
+    max.x = max.y = INT_MAX;
+    switch (vt) {
+        case vtButton:
+            min.x = 5;
+            min.y = 2;
+            break;
+
+        case vtVScroll:
+            min.x = 1;
+            min.y = 3;
+            break;
+
+        case vtHScroll:
+            min.x = 3;
+            min.y = 1;
+            break;
+
+        default:
+            min.x = 3;
+            min.y = 1;
+    }
 }
 
 /* InitObject ------------------------------------------------------------*/
 // returns a valid tview object of type vt
-TView * InitObject(TPoint Position, TViewType vt, ushort mode)
-{
+TView * InitObject(TPoint Position, TViewType vt, ushort mode) {
    TView * rst;
-#define _createobj_(o,c) if (mode != 0) c++;\
-         rst = new o(DefineRect(vt, Position)); break
-#define _createcluster_(o, c) if (mode != 0) c++;\
-         rst = new o( DefineRect(vt, Position),\
-         new TSItem("FreeDsgn",\
-         new TSItem("For",\
-         new TSItem("TVision", 0 ))) ); break
-   switch(vt)
-   {
-      case vtLabel: _createobj_(TDLabel, LabelCount);
-      case vtInput: _createobj_(TDInputLine, InputCount);
-      case vtMemo: _createobj_(TDMemo, MemoCount);
-      case vtStatic: _createobj_(TDStaticText, StaticCount);
-      case vtButton: _createobj_(TDButton, ButtonCount);
-      case vtListBox: _createobj_(TDListBox, ListBoxCount);
+#define _createobj_(o,c) if (mode != 0) c++;           \
+         rst = new o(DefineRect(vt, Position));        \
+         break
+#define _createcluster_(o, c) if (mode != 0) c++;      \
+         rst = new o( DefineRect(vt, Position),        \
+         new TSItem("FreeDsgn",                        \
+         new TSItem("For",                             \
+         new TSItem("TVision", 0 ))) );                \
+         break
+
+   switch (vt) {
+      case vtLabel:       _createobj_    (TDLabel,        LabelCount);
+      case vtInput:       _createobj_    (TDInputLine,    InputCount);
+      case vtMemo:        _createobj_    (TDMemo,         MemoCount);
+      case vtStatic:      _createobj_    (TDStaticText,   StaticCount);
+      case vtButton:      _createobj_    (TDButton,       ButtonCount);
+      case vtListBox:     _createobj_    (TDListBox,      ListBoxCount);
       case vtRadioButton: _createcluster_(TDRadioButtons, RadioCount);
-      case vtCheckBox: _createcluster_(TDCheckBoxes, CheckCount);
-      case vtVScroll: _createobj_(TVScrollBar, VScrollCount);
-      case vtHScroll: _createobj_(THScrollBar, HScrollCount);
+      case vtCheckBox:    _createcluster_(TDCheckBoxes,   CheckCount);
+      case vtVScroll:     _createobj_    (TVScrollBar,    VScrollCount);
+      case vtHScroll:     _createobj_    (THScrollBar,    HScrollCount);
       default: return 0;
    }
    return rst;
@@ -541,13 +569,10 @@ TSItem * strCollToItems(TStringCollection * strs)
    } else return 0;
 }
 
-/* LoadObject ===========================================================*/
-
-void * readDsgInfo( ipstream& s, TViewType vt )
-{
-   void * rst = malloc(vtAttrSize[vt]);
-   s.readBytes(rst, vtAttrSize[vt]);
-   return rst;
+void *readDsgInfo( ipstream& s, TViewType vt ) {
+    void *rst = malloc(vtAttrSize[vt]);
+    s.readBytes(rst, vtAttrSize[vt]);
+    return rst;
 }
 
 void readStrings( ipstream& s, TCollection * c, int limit )
@@ -565,51 +590,52 @@ void readStrings( ipstream& s, TCollection * c, int limit )
    }
 }
 
-TView * LoadObject( ipstream& s )
-{
-   TView * rst=0;
-   TDsgObj * obj;
-   static TViewType vt;
-   static int auxVt;
-   TStringCollection * items=0;
-   ushort Count;
-   char * Text;
-   TPoint p;
-   
-   s >> auxVt;
-   vt=(TViewType)auxVt;
-   if (vt == vtNone) return 0;
-   void * attr = readDsgInfo(s, vt);
-   if (!attr) return 0;
-   p.x = 0; p.y = 0;
-   if (vt != vtDialog) rst = InitObject( p, vt, 0 );
-   rst->setState(sfEditing, True);
-   obj = ObjectLinker()->viewFind(rst)->d;
-   memcpy(obj->attributes, attr, vtAttrSize[vt]);
-   free(attr);
-   if (vt==vtStatic)
-     {
-      s >> Count;
-      if (Count > 0)
-      {
-         Text = (char *)malloc(Count);
-         s.readBytes(Text, Count);
-         delete[] ((TDStaticData *)obj->attributes)->text;
-         ((TDStaticData *)obj->attributes)->text = Text;
-      }
-     }
-   if (vt>=vtRadioButton && vt<=vtCheckBox)
-     {
-      s >> Count;
-      if (Count > 0 && Count <= 32)
-      {
-         items = (TStringCollection *)obj->dsgGetData();
-         readStrings(s, items, Count);
-      } else items->freeAll();
-      ((TDClusterData *)obj->attributes)->items = items;
-     }
-// obj->dsgUpdate();
-   return rst;
+// LoadObject ===========================================================*/
+TView * LoadObject( ipstream& s ) {
+    TView * rst=0;
+    TDsgObj * obj;
+    static TViewType vt;
+    static int auxVt;
+    TStringCollection * items=0;
+    ushort Count;
+    char * Text;
+    TPoint p;
+
+    s >> auxVt;
+    vt=(TViewType)auxVt;
+
+    if (vt == vtNone)
+        return 0;
+    void * attr = readDsgInfo(s, vt);
+
+    if (!attr)
+        return 0;
+    p.x = 0;
+    p.y = 0;
+    if (vt != vtDialog) rst = InitObject( p, vt, 0 );
+    rst->setState(sfEditing, True);
+    obj = ObjectLinker()->viewFind(rst)->d;
+    memcpy(obj->attributes, attr, vtAttrSize[vt]);
+    free(attr);
+    if (vt==vtStatic) {
+        s >> Count;
+        if (Count > 0) {
+            Text = (char *)malloc(Count);
+            s.readBytes(Text, Count);
+            delete[] ((TDStaticData *)obj->attributes)->text;
+            ((TDStaticData *)obj->attributes)->text = Text;
+        }
+    }
+    if (vt>=vtRadioButton && vt<=vtCheckBox) {
+        s >> Count;
+        if (Count > 0 && Count <= 32) {
+            items = (TStringCollection *)obj->dsgGetData();
+            readStrings(s, items, Count);
+        } else items->freeAll();
+        ((TDClusterData *)obj->attributes)->items = items;
+    }
+    obj->dsgUpdate();   // FIXME?
+    return rst;
 }
 
 void SaveObject( ofpstream& s, TDsgObj * obj )
@@ -666,9 +692,9 @@ void TDFrame::draw()
       for (i = 0; i <= size.x; i++)
       {
          c = ((i + 1) % 10 == 0) ? 0x7e : 0x78;
-         b.moveChar(i, 'ú', c, 1);
+         b.moveChar(i, '.', c, 1);
       }
-      bl.moveChar(0, 'ú', 0x7e, size.x - 2);
+      bl.moveChar(0, '.', 0x7e, size.x - 2);
       for (i = 1; i <= size.y - 1; i++)
       {
          if (i % 10 == 0)
@@ -806,25 +832,24 @@ void TDsgObj::setupView(TView * View)
    View->state = editData->state;
 }
 
-bool TDsgObj::tabStop()
-{
-   return ((viewType != vtLabel &&
-            viewType != vtStatic &&
-            viewType != vtVScroll &&
+bool TDsgObj::tabStop() {
+   return ((viewType != vtLabel    &&
+            viewType != vtStatic   &&
+            viewType != vtVScroll  &&
             viewType != vtHScroll) ||
            ( ((TDsgObjData *)attributes)->options & ofSelectable ) );
 }
 
-void TDsgObj::dsgUpdate()
-{
-   TView * me = Me();
-   TDsgObjData * d = (TDsgObjData *)attributes;
-   TRect r = TRect(d->origin.x, d->origin.y,
-           d->origin.x + d->size.x, d->origin.y + d->size.y);
-   if (r != me->getBounds()) me->changeBounds(r);
-   if (tabStop()) ObjectLinker()->doReOrder();
-   ((TDDialog *)me->owner)->setModified(True);
-   me->owner->CLY_Redraw();
+void TDsgObj::dsgUpdate() {
+    TView *me = Me();
+    TDsgObjData * d = (TDsgObjData *)attributes;
+    TRect r = TRect(d->origin.x, d->origin.y, d->origin.x + d->size.x, d->origin.y + d->size.y);
+    if (r != me->getBounds())
+        me->changeBounds(r);
+    if (tabStop())
+        ObjectLinker()->doReOrder();
+    ((TDDialog *)me->owner)->setModified(True);
+    me->owner->CLY_Redraw();
 }
 
 /* TDDialog =============================================================*/
@@ -857,52 +882,45 @@ void TDDialog::setModified(Boolean aState)
    modified = aState;
 }
 
-void TDDialog::handleEvent(TEvent& event)
-{
-   TView * P;
-   TPoint mouse;
+void TDDialog::handleEvent(TEvent& event) {
+    TView * P;
+    TPoint mouse;
 
-   if (event.what == evKeyboard)
-   {
-      switch(event.keyDown.keyCode)
-      {
-         case kbUp: selectNext(true); clearEvent(event); break;
-         case kbDown: selectNext(false); clearEvent(event); break;
-         case kbLeft: selectNext(true); clearEvent(event); break;
-         case kbRight: selectNext(false); clearEvent(event); break;
-         case kbCtrlDel:
-            if (current)
-            {
-               P = current;
-               remove(current);
-               delete P;
-               clearEvent(event);
+    if (event.what == evKeyboard) {
+        switch(event.keyDown.keyCode) {
+            case kbUp: selectNext(true); clearEvent(event); break;
+            case kbDown: selectNext(false); clearEvent(event); break;
+            case kbLeft: selectNext(true); clearEvent(event); break;
+            case kbRight: selectNext(false); clearEvent(event); break;
+            case kbCtrlDel:
+                          if (current) {
+                              P = current;
+                              remove(current);
+                              delete P;
+                              clearEvent(event);
+                          }
+                          break;
+
+            case kbEnter:
+                          if (current) DsgDragView(current, dmDragMove|dmDragGrow, event);
+                          clearEvent(event);
+                          break;
+
+            default: TDialog::handleEvent(event);
+        }
+    } else
+        if (event.what == evBroadcast) {
+            if (event.message.command == cmItemDropped) {
+                P = NULL;
+                if (FloatingView) { mouse = FloatingView->origin; mouse.y++; }
+                else mouse = Mouse->where;
+                if ( mouseInView(mouse) && !ToolDlg->mouseInView(mouse) && !ObjEdit->mouseInView(mouse) )
+                    P = InitObject(makeLocal(mouse), (TViewType)event.message.infoLong, sfEditing);
+                if (P) dinsert(P);
             }
-         break;
-         case kbEnter:
-            if (current) DsgDragView(current, dmDragMove|dmDragGrow, event);
-            clearEvent(event);
-         break;
-         default: TDialog::handleEvent(event);
-      }
-   }
-   else
-   if (event.what == evBroadcast)
-   {
-      if (event.message.command == cmItemDropped)
-      {
-         P = NULL;
-         if (FloatingView) { mouse = FloatingView->origin; mouse.y++; }
-         else mouse = Mouse->where;
-         if ( mouseInView(mouse) && !ToolDlg->mouseInView(mouse) &&
-              !ObjEdit->mouseInView(mouse) )
-            P = InitObject(makeLocal(mouse),
-            (TViewType)event.message.infoLong, sfEditing);
-         if (P) dinsert(P);
-      }
-   }
-   TDialog::handleEvent(event);
-   if (event.what == evMouseDown) ObjEdit->setObjData(this);
+        }
+    TDialog::handleEvent(event);
+    if (event.what == evMouseDown) ObjEdit->setObjData(this);
 }
 
 void TDDialog::draw() { TDialog::draw(); }
@@ -958,45 +976,47 @@ void TDDialog::changeBounds(const TRect& bounds) {_chgbnds_(TDialog); }
 
 TView * TDDialog::Me() { return this; }
 
-void TDDialog::dsgUpdate()
-{
-   TDsgObj::dsgUpdate();
-   TDDialogData * d = (TDDialogData *)attributes;
-   delete[] title;
-   title = newStr(d->title);
-   frame->drawView();
-   setModified(True);
+void TDDialog::dsgUpdate() {
+    TDsgObj::dsgUpdate();
+    TDDialogData * d = (TDDialogData *)attributes;
+    delete[] title;
+    title = newStr(d->title);
+    frame->drawView();
+    setModified(True);
 }
 
 void * TDDialog::dsgGetData() { return (void *)title; }
 
-Boolean TDDialog::Save(int aCommand)
-{
-   char * f;
-   int cmd = aCommand;
-   if (modified)
-   {
-      if (cmd != cmYes)
-        cmd = messageBox(__("The current dialog was modified. Save it?"),
-              mfYesNoCancel | mfWarning);
-      if ( cmd == cmYes && (fileName == 0 || strlen(fileName) == 0) )
-      {
-         f = getFileName(_("Save dialog"), "*.fdg", 1);
-         if (f)
-         {
-            delete[] fileName;
-            fileName = f;
-            return True;
-         }
-      }
-      switch (cmd)
-      {
-          case cmYes: saveToFile(fileName); return True;
-          case cmNo: return True;
-          case cmCancel: return False;
-      }
-   } //else return True;
- return True;  
+Boolean TDDialog::Save(int aCommand) {
+    char *f;
+    int   cmd = aCommand;
+
+    if (modified) {
+        if (cmd != cmYes)
+            cmd = messageBox(__("The current dialog was modified. Save it?"), mfYesNoCancel | mfWarning);
+
+        if ( cmd == cmYes && (fileName == 0 || strlen(fileName) == 0) ) {
+            f = getFileName(_("Save dialog"), "*.fdg", 1);
+            if (f) {
+                delete[] fileName;
+                fileName = f;
+                return True;
+            }
+        }
+        messageBox("Here A",mfOKButton);
+        switch (cmd) {
+            case cmYes:
+                saveToFile(fileName);
+                return True;
+
+            case cmNo:
+                return True;
+
+            case cmCancel:
+                return False;
+        }
+    } //else return True;
+    return True;  
 }
 
 static void saveObject(void * v, void * d)
@@ -1017,11 +1037,13 @@ static void saveObject(void * v, void * d)
 #endif
 }
 
-Boolean TDDialog::saveToFile(const char * FileName)
-{
-    ofpstream * S = initFile(FileName, fileName, dialogFileSig);
-    if (S != 0)
-    {
+Boolean TDDialog::saveToFile(const char * FileName) {
+    char tiago[2048];
+    sprintf(tiago,"Here B: %s",FileName);
+    messageBox(tiago,mfOKButton);
+    ofpstream * S = initFile(FileName, fileName, (char *)dialogFileSig);
+    if (S != 0) {
+        messageBox("Here C",mfOKButton);
         ofpstream& s = *S;
         s << viewType;
         s.writeBytes(attributes, vtAttrSize[viewType]);
@@ -1029,6 +1051,10 @@ Boolean TDDialog::saveToFile(const char * FileName)
         s << LabelCount  << InputCount   << MemoCount
           << StaticCount << ButtonCount  << ListBoxCount << RadioCount
           << CheckCount  << VScrollCount << HScrollCount << UserCount;
+        sprintf(tiago, "%d %d %d %d %d %d %d %d %d %d %d", LabelCount  , InputCount   , MemoCount
+                                                         , StaticCount , ButtonCount  , ListBoxCount , RadioCount
+                                                         , CheckCount  , VScrollCount , HScrollCount , UserCount );
+        messageBox(tiago,mfOKButton);
         ObjectLinker()->sortForBuild();
         ObjectLinker()->forEach(&saveObject, &s);
         s << vtNone;
@@ -1036,65 +1062,77 @@ Boolean TDDialog::saveToFile(const char * FileName)
         delete S;
         return True;
         setModified(False);
-    } else return False;
+    } else {
+        return False;
+    }
 }
 
 Boolean TDDialog::loadFromFile(const char * FileName)
 {
-   static int vtAux;
-   static TViewType vt;
-   
-   if (!Save(cmYes)) return False;
-   
-   if (!FileName) return False;
-   
-   if (fileName)
-   {
-      if (strcmp(FileName, fileName) == 0) return True;
-      delete[] fileName;
-   }
-   fileName = newStr(FileName);
-     
-   ifpstream * S = openFile(FileName, dialogFileSig);
-   TView * v;
-   TView * p = last;
-   do {
-      TView * t = p->prev();
-      if (p != frame) CLY_destroy(p);
-      p = t;
-   } while (first() != last);
-   
-   if (S != 0)
-   {
-      ifpstream& s = *S;
-      s >> vtAux; vt = (TViewType)vtAux;
-      if (vt != vtDialog) { s.close(); return False; }
-      void * attr = readDsgInfo(s, vt);
-      memcpy(attributes, attr, vtAttrSize[vt]);
-      free(attr);
-      char aux;
-      s >> aux; GridState=aux ? True : False;
-      s >> LabelCount  >> InputCount   >> MemoCount
-        >> StaticCount >> ButtonCount  >> ListBoxCount >> RadioCount
-        >> CheckCount  >> VScrollCount >> HScrollCount >> UserCount;
-      dsgUpdate();
-      TabOrder = 0;
-      v = LoadObject(s);
-      while (v)
-      {
-         dinsert(v);
-         TDsgLink * dsg = ObjectLinker()->viewFind(v);
-         if (dsg) dsg->d->dsgUpdate();
-         v = LoadObject(s);
-      }
-      if (fileName) delete[] fileName;
-      fileName = strdup(FileName);
-      selectNext(True);
-      setModified(False);
-      s.close();
-      delete S;
-   } //else return False;
- return False;  
+    static int vtAux;
+    static TViewType vt;
+
+    if (!Save(cmYes)) return False;
+
+    if (!FileName) return False;
+
+    if (fileName) {
+        if (strcmp(FileName, fileName) == 0) return True;
+        delete[] fileName;
+    }
+    fileName = newStr(FileName);
+
+    ifpstream * S = openFile(FileName, (char *)dialogFileSig);
+    TView * v;
+    TView * p = last;
+    do {
+        TView * t = p->prev();
+        if (p != frame) CLY_destroy(p);
+        p = t;
+    } while (first() != last);
+
+    if (S != 0) {
+        char tiago[1024];
+        ifpstream& s = *S;
+
+        s >> vtAux; vt = (TViewType)vtAux;
+        if (vt != vtDialog) { // 0x0B
+            s.close();
+            return False;
+        }
+
+        void * attr = readDsgInfo(s, vt);
+        memcpy(attributes, attr, vtAttrSize[vt]);
+        sprintf(tiago,"INFO: %d", sizeof(TViewData));
+        messageBox(tiago,mfOKButton);
+        free(attr);
+        char aux;
+        s >> aux; GridState=aux ? True : False;
+        s >> LabelCount  >> InputCount   >> MemoCount
+          >> StaticCount >> ButtonCount  >> ListBoxCount >> RadioCount
+          >> CheckCount  >> VScrollCount >> HScrollCount >> UserCount;
+        sprintf(tiago, "%d %d %d %d %d %d %d %d %d %d %d", LabelCount  , InputCount   , MemoCount
+                                                         , StaticCount , ButtonCount  , ListBoxCount , RadioCount
+                                                         , CheckCount  , VScrollCount , HScrollCount , UserCount );
+        messageBox(tiago,mfOKButton);
+
+        dsgUpdate();
+        TabOrder = 0;
+        v = LoadObject(s);
+        while (v) {
+            dinsert(v);
+            TDsgLink *dsg = ObjectLinker()->viewFind(v);
+            if (dsg) dsg->d->dsgUpdate();
+            v = LoadObject(s);
+        }
+        if (fileName) delete[] fileName;
+        fileName = strdup(FileName);
+        selectNext(True);
+        setModified(False);
+        s.close();
+        delete S;
+    } //else return False;
+    return False;  
 }
 
 /* TDLabel ==============================================================*/

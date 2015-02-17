@@ -52,27 +52,20 @@
 #include "fdconsts.h"
 #include "dsgdata.h"
 #include "propedit.h"
-/*
-typedef short TViewType;
 
-const TViewType
-   vtNone = -1,
-   vtOther = 0,
-   vtLabel = 1,
-   vtInput = 2,
-   vtMemo = 3,
-   vtStatic = 4,
-   vtButton = 5,
-   vtListBox = 6,
-   vtRadioButton = 7,
-   vtCheckBox = 8,
-   vtVScroll = 9,
-   vtHScroll = 10,
-   vtDialog = 11;
-*/
-enum TViewType { vtNone = -1, vtOther, vtLabel, vtInput, vtMemo, vtStatic,
-   vtButton, vtListBox, vtRadioButton, vtCheckBox, vtVScroll, vtHScroll,
-   vtDialog };
+enum TViewType { vtNone        = -1,
+                 vtOther       = 0,
+                 vtLabel       = 1,
+                 vtInput       = 2,
+                 vtMemo        = 3,
+                 vtStatic      = 4,
+                 vtButton      = 5,
+                 vtListBox     = 6,
+                 vtRadioButton = 7,
+                 vtCheckBox    = 8,
+                 vtVScroll     = 9,
+                 vtHScroll     = 10,
+                 vtDialog      = 11 };
    
 
 class TEditCollection: public TCollection

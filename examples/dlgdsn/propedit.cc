@@ -9,6 +9,10 @@
     Heavily modified by Salvador E. Tropea to compile without warnings.
     Some warnings were in fact bugs.
     For gcc 2.95.x and then 3.0.1.
+
+    Feb 2015, Further modifications by Tiago Gasiba
+        + Lots of bugfixes and cleanup of warnings
+        + Compiles with gcc 4.9.2
     
  ***************************************************************************/
 
@@ -85,7 +89,7 @@ static TLinkList * ObjLink = 0;
 static TObjEdit * ObjEdit;
 
 // To resolve (sprintf "%s") when there is nothing to do
-static char * blank = "";
+const char * blankString = "";
 
 //extern int TabOrder;
 
@@ -262,15 +266,15 @@ void TLinkList::add(TView * aView, TDsgObj * aDsgObj)
       case vtStatic: break;
       case vtButton: break;
       case vtLabel:
-         strcpy( ((TDLabelData *)aDsgObj->attributes)->link, blank );
+         strcpy( ((TDLabelData *)aDsgObj->attributes)->link, blankString );
       break;
       case vtMemo:
-         strcpy( ((TDMemoData *)aDsgObj->attributes)->hScroll, blank );
-         strcpy( ((TDMemoData *)aDsgObj->attributes)->vScroll, blank );
+         strcpy( ((TDMemoData *)aDsgObj->attributes)->hScroll, blankString );
+         strcpy( ((TDMemoData *)aDsgObj->attributes)->vScroll, blankString );
          LinkList->insert(&data->thisName);
       break;
       case vtListBox:
-         strcpy( ((TDListBoxData *)aDsgObj->attributes)->scrollBar, blank );
+         strcpy( ((TDListBoxData *)aDsgObj->attributes)->scrollBar, blankString );
          LinkList->insert(&data->thisName);
       break;
       default: LinkList->insert(&data->thisName);
@@ -337,8 +341,8 @@ void TLinkList::sortForBuild()
    } while (i < count);
    i = 0;
    do {
-      s1 = blank;
-      s2 = blank;
+      s1 = blankString;
+      s2 = blankString;
       attr = (TViewData *)((TDsgLink *)items[i])->d->attributes;
       if ((((TDsgLink *)items[i])->d)->viewType == vtListBox)
          s1 = ((TDListBoxData *)attr)->scrollBar;
@@ -348,7 +352,7 @@ void TLinkList::sortForBuild()
          s2 = ((TDMemoData *)attr)->hScroll;
       }
       if (tmp = scrollFind(s2))
-        { _item_move_( ((i - 1) >= 0) ? i - 1: 0 ); if (s1 != blank) i--; }
+        { _item_move_( ((i - 1) >= 0) ? i - 1: 0 ); if (s1 != blankString) i--; }
       if (tmp = scrollFind(s1))
         { _item_move_( ((i - 1) >= 0) ? i - 1: 0 ); }
       i++;
@@ -369,22 +373,22 @@ void TLinkList::removeNotify(TCollection * aCollection, int Index)
       {
          if ( strcmp( ((TDLabelData *)d->attributes)->link,
                       (char *)aCollection->at(Index) ) == 0 )
-             strcpy ( ((TDLabelData *)d->attributes)->link, blank );
+             strcpy ( ((TDLabelData *)d->attributes)->link, blankString );
       }
       else if (aCollection == ScrollList && d->viewType == vtListBox)
       {
          if ( strcmp( ((TDListBoxData *)d->attributes)->scrollBar,
                       (char *)aCollection->at(Index) ) == 0 )
-             strcpy ( ((TDListBoxData *)d->attributes)->scrollBar, blank );
+             strcpy ( ((TDListBoxData *)d->attributes)->scrollBar, blankString );
       }
       else if (aCollection == ScrollList && d->viewType == vtMemo)
       {
          if ( strcmp( ((TDMemoData *)d->attributes)->hScroll,
                       (char *)aCollection->at(Index) ) == 0 )
-            strcpy ( ((TDMemoData *)d->attributes)->hScroll, blank );
+            strcpy ( ((TDMemoData *)d->attributes)->hScroll, blankString );
          if ( strcmp( ((TDMemoData *)d->attributes)->hScroll,
                       (char *)aCollection->at(Index) ) == 0 )
-            strcpy ( ((TDMemoData *)d->attributes)->vScroll, blank );
+            strcpy ( ((TDMemoData *)d->attributes)->vScroll, blankString );
       }
    }
 }
@@ -484,13 +488,11 @@ ushort TInPlaceEdit::execute()
 
 /* Inplace editors --------------------------------------------------------*/
 
-bool IntegerEditor(int& value, TPoint place, TGroup * host)
-{
+bool IntegerEditor(int& value, TPoint place, TGroup * host) {
    bool rst = false;
    char strval[20];
 
-   TRect r(place.x, place.y, place.x +
-           (host->size.x - place.x - 1), place.y + 1);
+   TRect r(place.x, place.y, place.x + (host->size.x - place.x - 1), place.y + 1);
    
    sprintf(strval, "%i", value);
 
@@ -500,8 +502,7 @@ bool IntegerEditor(int& value, TPoint place, TGroup * host)
        
    editor->setData(&strval);
    rst = ( host->execView(editor) == cmOK );
-   if (rst)
-   {
+   if (rst) {
       editor->getData(&strval);
       value = atoi(strval);
    }
@@ -713,16 +714,16 @@ void TObjEditView::setMap(const TStructMap * aMap, void * Data)
    drawView();
 }
 
-void calcPlace(TPoint& p, short column, short line, const TStructMap * map)
-{
-   p.x = column + 1;
-   p.y = line;
-   while (map->next)
-   {
-      if (map->dataSize == 0) p.y++;
-      map = map->next;
-      if (map->index >= line) break;
-   }
+void calcPlace(TPoint& p, short column, short line, const TStructMap * map) {
+    p.x = column + 1;
+    p.y = line;
+    while (map->next) {
+        if (map->dataSize == 0)
+            p.y++;
+        map = map->next;
+        if (map->index >= line)
+            break;
+    }
 }
 
 int findStr(TCollection * col, const char * cmp)
@@ -734,8 +735,7 @@ int findStr(TCollection * col, const char * cmp)
    return 0;
 }
 
-void TObjEditView::editItem(const TStructMap * map)
-{
+void TObjEditView::editItem(const TStructMap * map) {
    ushort Val;
    TListBoxRec rec;
    void * v;
@@ -762,57 +762,61 @@ void TObjEditView::editItem(const TStructMap * map)
           if (chg) memcpy(ldata, &rec.selection, sizeof(ushort)); break;
 
 
-   if (map->readOnly)
-   {
+   if (map->readOnly) {
        messageBox("Ops! Read only value.", mfOKButton);
        return;
    }
   
-   void * ldata = (void *)((char *)data + map->offset);
-   bool chg = false;
+   void *ldata = (void *)((char *)data + map->offset);
+   bool  chg   = false;
   
-   switch(map->editorType)
-   {
+   switch (map->editorType) {
        case etStringEditor:
-          calcPlace(place, separator, map->index, dataMap);
-          if (map->index == 6) strcpy(oldName, (char *)ldata);
-          chg = StringEditor((char *)ldata, place, owner, map->dataSize);
-          if ( (chg) && (map->index == 6 || vtCurrent == vtVScroll ||
-                                            vtCurrent == vtHScroll ) )
-          {
-             if (strlen((char *)ldata) == 0)
-             {
-                strcpy((char *)ldata, oldName);
-                chg = false;
-                break;
-             }
-             else if (strcmp((char *)ldata, oldName) != 0)
-                ObjLink->linkChangedName(oldName, (char *)ldata);
-          }
-          if (chg) message(owner, evMessage, cmValueChanged, 0);
-       break;
+           calcPlace(place, separator, map->index, dataMap);
+           if (map->index == 6) strcpy(oldName, (char *)ldata);
+           chg = StringEditor((char *)ldata, place, owner, map->dataSize);
+           if ( (chg) && (map->index == 6 || vtCurrent == vtVScroll || vtCurrent == vtHScroll ) ) {
+               if (strlen((char *)ldata) == 0) {
+                   strcpy((char *)ldata, oldName);
+                   chg = false;
+                   break;
+               }
+               else if (strcmp((char *)ldata, oldName) != 0)
+                   ObjLink->linkChangedName(oldName, (char *)ldata);
+           }
+           if (chg)
+               message(owner, evMessage, cmValueChanged, 0);
+           break;
+
        case etIntegerEditor:
-          calcPlace(place, separator, map->index, dataMap);
-          if (vtCurrent == vtListBox && map->index == 14)
-               i = (short)(long)ldata; else i = (long)ldata;
-          chg = IntegerEditor(i, place, owner);
-          if (vtCurrent == vtListBox && map->index == 14)
-             ldata = (void *)i; else ldata = (void *)i;
-          if (chg) message(owner, evMessage, cmValueChanged, 0);
-       break;
+           calcPlace(place, separator, map->index, dataMap);
+           if (vtCurrent == vtListBox && map->index == 14)
+               i = *(int *)ldata;
+           else
+               i = *(int *)ldata;
+           chg = IntegerEditor(i, place, owner);
+
+           if (vtCurrent == vtListBox && map->index == 14)
+               *(int *)ldata = i; //(void *)(long)i;
+           else
+               *(int *)ldata = i; //(void *)(long)i;
+           if (chg)
+               message(owner, evMessage, cmValueChanged, 0);
+           break;
+
        case etOptionsEditor: _do_(OptionsEditor);
        case etEventMaskEditor:
-          memcpy(&Val, ldata, sizeof(ushort));
-          if (Val & evCommand) { Val &= ~evCommand; Val |= 0x20; }
-          if (Val & evBroadcast) { Val &= ~evBroadcast; Val |= 0x40; }
-          chg = (execDialog(EventMaskEditor(), ldata) == cmOK);
-          if (chg)
-          {
-             if (Val & 0x20) { Val &= ~0x20; Val |= evCommand; }
-             if (Val & 0x40) { Val &= ~0x40; Val |= evBroadcast; }
-             memcpy(ldata, &Val, sizeof(ushort));
-          }
-       break;
+                             memcpy(&Val, ldata, sizeof(ushort));
+                             if (Val & evCommand) { Val &= ~evCommand; Val |= 0x20; }
+                             if (Val & evBroadcast) { Val &= ~evBroadcast; Val |= 0x40; }
+                             chg = (execDialog(EventMaskEditor(), ldata) == cmOK);
+                             if (chg)
+                             {
+                                 if (Val & 0x20) { Val &= ~0x20; Val |= evCommand; }
+                                 if (Val & 0x40) { Val &= ~0x40; Val |= evBroadcast; }
+                                 memcpy(ldata, &Val, sizeof(ushort));
+                             }
+                             break;
        case etStateEditor: _do_(StateEditor);
        case etGrowModeEditor: _do_(GrowModeEditor);
        case etDragModeEditor: _do_(DragModeEditor);
@@ -823,58 +827,58 @@ void TObjEditView::editItem(const TStructMap * map)
        case etValidatorEditor: _do_(ValidatorEditor);
        case etValidatorDataEditor: break;
        case etStrCollectionEditor:
-          chg = (execDialog(ItemsEditor(), ldata) == cmOK);
-          if (chg) message(owner, evMessage, cmValueChanged, 0);
-       break;
+                                   chg = (execDialog(ItemsEditor(), ldata) == cmOK);
+                                   if (chg) message(owner, evMessage, cmValueChanged, 0);
+                                   break;
        case etCharPtrEditor:
-          c = (char *)ldata;
-          strcpy(m.buffer, c);
-          c = (char *)m.buffer;
-          v = c;
-          while (c[0]) // Turning '\x3' to "\x3"
-          {
-              if (c[0] == 3/*&& (c + 3 - v) < 1024*/)
-              {
-                  memmove(c + 3, c + 1, strlen(c) + 1);
-                  memcpy(c, "\\x3", 3);
-              }
-              c++;
-          }
-          c = (char *)v;
-          m.length = strlen(c);
-          chg = (execDialog(CharPtrEditor(), &m) == cmOK);
-          if (chg)
-          {
-              if (m.length == 0) strcpy(c, "");
-              else  // Turning simbolic chars to raw
-              {
-                  delete[] c;
-                  c = (char *)m.buffer;
-                  while (c[0]) // eating CR chars
-                  {
-                      if (c[0] == '\x0d') memmove(c, c + 1, strlen(c - 1));
-                      c++;
-                  }
-                  c = (char *)m.buffer;
-                  while (c[0]) // Turning "\x3" to '\x3'
-                  {
-                      i = 0;
-                      if (c[0]==92)
-                      {
-                          while (c[i] != '3') { if (c[i] == 0) break; i++; }
-                          if (i <= 4)
-                          {
-                              c[0] = 3;
-                              memmove(&c[1], &c[i+1], strlen(c) - i);
-                          }
-                      }
-                      c++;
-                  }
-                  ldata=(void *)newStr(m.buffer);
-              }
-              message(owner, evMessage, cmValueChanged, 0);
-          }
-       break;
+                                   c = (char *)ldata;
+                                   strcpy(m.buffer, c);
+                                   c = (char *)m.buffer;
+                                   v = c;
+                                   while (c[0]) // Turning '\x3' to "\x3"
+                                   {
+                                       if (c[0] == 3/*&& (c + 3 - v) < 1024*/)
+                                       {
+                                           memmove(c + 3, c + 1, strlen(c) + 1);
+                                           memcpy(c, "\\x3", 3);
+                                       }
+                                       c++;
+                                   }
+                                   c = (char *)v;
+                                   m.length = strlen(c);
+                                   chg = (execDialog(CharPtrEditor(), &m) == cmOK);
+                                   if (chg)
+                                   {
+                                       if (m.length == 0) strcpy(c, "");
+                                       else  // Turning simbolic chars to raw
+                                       {
+                                           delete[] c;
+                                           c = (char *)m.buffer;
+                                           while (c[0]) // eating CR chars
+                                           {
+                                               if (c[0] == '\x0d') memmove(c, c + 1, strlen(c - 1));
+                                               c++;
+                                           }
+                                           c = (char *)m.buffer;
+                                           while (c[0]) // Turning "\x3" to '\x3'
+                                           {
+                                               i = 0;
+                                               if (c[0]==92)
+                                               {
+                                                   while (c[i] != '3') { if (c[i] == 0) break; i++; }
+                                                   if (i <= 4)
+                                                   {
+                                                       c[0] = 3;
+                                                       memmove(&c[1], &c[i+1], strlen(c) - i);
+                                                   }
+                                               }
+                                               c++;
+                                           }
+                                           ldata=(void *)newStr(m.buffer);
+                                       }
+                                       message(owner, evMessage, cmValueChanged, 0);
+                                   }
+                                   break;
        case etLinkEditor: _editlink_(LinkList, LinkEditor);
        case etScrollBarEditor: _editlink_(ScrollList, ScrollEditor);
    }
@@ -883,62 +887,54 @@ void TObjEditView::editItem(const TStructMap * map)
 #undef _do_
 }
 
-const char * TObjEditView::getValueFor(const TStructMap * map)
-{
-  static char buf[60];
-  static ushort ushrtval;
-  static int intval;
-  static void * ptrval;
-  static void * ldata;
-  
-  ldata = data;
-  ldata = (void *)((char *)ldata + map->offset);
-  
-  strcpy(buf, "<none>");
+const char * TObjEditView::getValueFor(const TStructMap * map) {
+    static char buf[60];
+    static ushort ushrtval;
+    static int intval;
+    static void * ptrval;
+    static void * ldata;
 
-  if (map->editorType == etIntegerEditor)
-  {
-     memcpy(&intval, ldata, map->dataSize);
-     sprintf(buf, "%i", intval);
-  }
-  else if ((map->editorType >= etOptionsEditor) &&
-    (map->editorType <= etValidatorEditor))
-  {
-     memcpy(&ushrtval, ldata, map->dataSize);
-     switch(map->editorType)
-     {
-        case etOptionsEditor: return OptionsStr(ushrtval);
-        case etEventMaskEditor: return EventMaskStr(ushrtval);
-        case etStateEditor: return StateStr(ushrtval);
-        case etGrowModeEditor: return GrowModeStr(ushrtval);
-        case etDragModeEditor: return DragModeStr(ushrtval);
-        case etHelpCtxEditor: return HelpCtxStr(ushrtval);
-        case etCommandEditor: return CommandStr(ushrtval);
-        case etButtonFlagEditor: return ButtonFlagStr(ushrtval);
-        case etWindowFlagEditor: return WindowFlagStr(ushrtval);
-        case etValidatorEditor: return ValidatorStr(ushrtval);
-     }
-  }
-  else if (map->editorType == etStrCollectionEditor ||
-           map->editorType == etCharPtrEditor)
-  {
-     memcpy(&ptrval, ldata, map->dataSize);
-     if (map->editorType == etCharPtrEditor)
-     return CharPtrStr(ptrval); else return ItemsStr(ptrval);
-  }
-  else if ( map->editorType == etStringEditor ||
-            map->editorType == etValidatorDataEditor )
-  {
-     memset(&buf, 0, 60);
-     memcpy(&buf, ldata, map->dataSize);
-     return buf;
-  }
-  else if (  map->editorType == etScrollBarEditor ||
-             map->editorType == etLinkEditor )
-  {
-     if (strlen((char *)ldata) > 0) return strcpy(buf, (char *)ldata);
-  }
-  return buf;
+    ldata = data;
+    ldata = (void *)((char *)ldata + map->offset);
+
+    strcpy(buf, "<none>");
+
+    if (map->editorType == etIntegerEditor) {
+        memcpy(&intval, ldata, map->dataSize);
+        sprintf(buf, "%i", intval);
+    }
+    else if ((map->editorType >= etOptionsEditor) && (map->editorType <= etValidatorEditor)) {
+        memcpy(&ushrtval, ldata, map->dataSize);
+        switch(map->editorType) {
+            case etOptionsEditor:    return OptionsStr(ushrtval);
+            case etEventMaskEditor:  return EventMaskStr(ushrtval);
+            case etStateEditor:      return StateStr(ushrtval);
+            case etGrowModeEditor:   return GrowModeStr(ushrtval);
+            case etDragModeEditor:   return DragModeStr(ushrtval);
+            case etHelpCtxEditor:    return HelpCtxStr(ushrtval);
+            case etCommandEditor:    return CommandStr(ushrtval);
+            case etButtonFlagEditor: return ButtonFlagStr(ushrtval);
+            case etWindowFlagEditor: return WindowFlagStr(ushrtval);
+            case etValidatorEditor:  return ValidatorStr(ushrtval);
+        }
+    }
+    else if (map->editorType == etStrCollectionEditor || map->editorType == etCharPtrEditor) {
+        memcpy(&ptrval, ldata, map->dataSize);
+        if (map->editorType == etCharPtrEditor) {
+            return CharPtrStr(ptrval);
+        } else {
+            return ItemsStr(ptrval);
+        }
+    }
+    else if ( map->editorType == etStringEditor || map->editorType == etValidatorDataEditor ) {
+        memset(&buf, 0, 60);
+        memcpy(&buf, ldata, map->dataSize);
+        return buf;
+    }
+    else if (  map->editorType == etScrollBarEditor || map->editorType == etLinkEditor ) {
+        if (strlen((char *)ldata) > 0) return strcpy(buf, (char *)ldata);
+    }
+    return buf;
 }
 
 class TLDrawBuffer: public TDrawBuffer
@@ -949,68 +945,64 @@ public:
 
 #define _lo_(a) ((uchar *)&a)[0]
 
-void TObjEditView::draw()
-{
-   TLDrawBuffer b;
-   const TStructMap * curMap;
-   const TStructMap * cur;
-   int r, l, tmp, line = 0;
-   char lstr[100], rstr[100];
-   char lfmt[10], rfmt[10];
-   ushort attr;
-   
-   if (separator > size.x) separator = size.x / 2;
-   r = (size.x - separator) + separator;
-   l = separator;
-   
-   curMap = currentMap;
-   if ((curMap) && size.y > 0)
-   {
-      cur = curMap;
-      while (cur->prev) cur = cur->prev;
-      do
-      {
-         if (cur->dataSize == 0)
-         {
-            tmp = (size.x - strlen(cur->label)) / 2;
-            b.moveChar(0, 0x20, 0x3e, tmp);
-            b.moveBuf(tmp, cur->label, 0x3e, strlen(cur->label));
-            b.moveChar(tmp + strlen(cur->label), 0x20, 0x3e, tmp + 1);
-            attr = b.getData(l);
-            if (_lo_(attr) == 0x20) b.moveChar(l, 0xb3, 0x31, 1);
-            writeLine(0, line, size.x, 1, b);
-            line++;
-         }
-         else
-         {
-            sprintf(lfmt, "%%-%is", l - 1);
-            sprintf(lstr, lfmt, cur->label);
-            sprintf(rfmt, "%%-%is", r);
-            char *tmp=newStr(getValueFor(cur));
-            if (tmp && strlen(tmp)>=(size_t)r)
-               tmp[r-1]=0;
-            sprintf(rstr, rfmt, tmp ? tmp : "ERROR");
-            DeleteArray(tmp);
-            if (cur == curMap)
-              attr = 0x71; else attr = 0x1f;
-            b.moveBuf(0, lstr, attr, l);
-            if (cur == curMap)
-              attr = 0x71; else attr = 0x13;
-            b.moveChar(l, 0xb3, attr, 1);
-            if (cur == curMap)
-              attr = 0x71; else attr = 0x1e;
-            b.moveBuf(l + 1, rstr, attr, r);
-            writeLine(0, line, size.x, 1, b);
-            line++;
-         }
-         if (line > size.y - 1) break;
-         cur = cur->next;
-      } while (cur);
-      b.moveChar(0, 0x20, 0x1f, size.x);
-      b.moveChar(l, 0xb3, 0x13, 1);
-      writeLine(0, line, size.x, size.y - line, b);
-   }
-   else TView::draw();
+void TObjEditView::draw() {
+    TLDrawBuffer b;
+    const TStructMap * curMap;
+    const TStructMap * cur;
+    int r, l, tmp, line = 0;
+    char lstr[100], rstr[100];
+    char lfmt[10], rfmt[10];
+    ushort attr;
+
+    if (separator > size.x) separator = size.x / 2;
+    r = (size.x - separator) + separator;
+    l = separator;
+
+    curMap = currentMap;
+    if ((curMap) && size.y > 0) {
+        cur = curMap;
+        while (cur->prev) cur = cur->prev;
+        do {
+            if (cur->dataSize == 0) {
+                tmp = (size.x - strlen(cur->label)) / 2;
+                b.moveChar(0, 0x20, 0x3e, tmp);
+                b.moveBuf(tmp, cur->label, 0x3e, strlen(cur->label));
+                b.moveChar(tmp + strlen(cur->label), 0x20, 0x3e, tmp + 1);
+                attr = b.getData(l);
+                if (_lo_(attr) == 0x20) b.moveChar(l, '|', 0x31, 1);
+                writeLine(0, line, size.x, 1, b);
+                line++;
+            } else {
+                sprintf(lfmt, "%%-%is ", l - 1);
+                sprintf(lstr, lfmt, cur->label);
+
+                sprintf(rfmt, "%%-%is", r);
+                char *tmp = newStr(getValueFor(cur));
+                if (tmp && strlen(tmp)>=(size_t)r)
+                    tmp[r-1]=0;
+                sprintf(rstr, rfmt, tmp ? tmp : "ERROR");
+                DeleteArray(tmp);
+                if (cur == curMap)
+                    attr = 0x71; else attr = 0x1f;
+                b.moveBuf(0, lstr, attr, l);
+                if (cur == curMap)
+                    attr = 0x71; else attr = 0x13;
+                b.moveChar(l, '|', attr, 1);
+                if (cur == curMap)
+                    attr = 0x71; else attr = 0x1e;
+                b.moveBuf(l + 1, rstr, attr, r);
+                writeLine(0, line, size.x, 1, b);
+                line++;
+            }
+            if (line > size.y - 1) break;
+            cur = cur->next;
+        } while (cur);
+        b.moveChar(0, 0x20, 0x1f, size.x);
+        b.moveChar(l, '|', 0x13, 1);
+        writeLine(0, line, size.x, size.y - line, b);
+    } else {
+        TView::draw();
+    }
 }
 
 #undef _lo_
@@ -1035,95 +1027,87 @@ const TStructMap * itemForLine(int line, const TStructMap * Map)
 
 void TObjEditView::handleEvent(TEvent& event)
 {
-   const TStructMap * t;
-   ushort i;
-   
-   TView::handleEvent(event);
-   
-   if (!currentMap) return;
-   
-   TPoint Locate;
-   if (event.what == evBroadcast &&
-       event.message.command == cmScrollBarChanged &&
-       event.message.infoPtr == sb)
-   {
-      i = sb->value;
-      t = dataMap;
-      while ((t->index != i) && (t->next)) t = t->next;
-      if ((t->index == i) && (t != currentMap))
-      {
-         currentMap = t;
-         drawView();
-      }
-   }
-   else
-   if (event.what == evMouseDown)
-   {
-      Locate = makeLocal(event.mouse.where);
-      if (Locate.x == separator)
-      {
-        do
-        {
-           Locate = makeLocal(event.mouse.where);
-           if ((Locate.x >= 1) && (Locate.x <= (size.x - 2)))
-             {  separator = Locate.x; drawView(); }
-        } while ( mouseEvent( event, evMouseMove ) );
-      }
-      else
-      {
-         t = itemForLine(Locate.y, dataMap);
-         if ((t) && t != currentMap)
-         {
-            sb->setValue(t->index);
+    const TStructMap * t;
+    ushort i;
+
+    TView::handleEvent(event);
+
+    if (!currentMap) return;
+
+    TPoint Locate;
+    if (event.what == evBroadcast && event.message.command == cmScrollBarChanged && event.message.infoPtr == sb) {
+        i = sb->value;
+        t = dataMap;
+        while ((t->index != i) && (t->next)) t = t->next;
+        if ((t->index == i) && (t != currentMap)) {
             currentMap = t;
             drawView();
-         }
-         else if ((t == currentMap) && (event.mouse.doubleClick) &&
-             (event.mouse.buttons == mbLeftButton)) editItem(currentMap);
-      }
-   }
-   else
-   if (event.what == evKeyboard)
-   {
-      switch(event.keyDown.keyCode)
-      {
-         case kbUp:
-           if (currentMap->prev)
-           {
-             currentMap = currentMap->prev;
-             if (currentMap->dataSize == 0)
-               if (currentMap->prev) currentMap = currentMap->prev;
-             _endcase_(next);
-           }
-         break;
-         case kbDown:
-           if (currentMap->next)
-           {
-             currentMap = currentMap->next;
-             _endcase_(next);
-           }
-         break;
-         case kbPgUp:
-           while (currentMap->prev) currentMap = currentMap->prev;
-           _endcase_(next);
-         break;
-         case kbPgDn:
-           while (currentMap->next) currentMap = currentMap->next;
-           _endcase_(prev);
-         break;
-         case kbEnter:
-           clearEvent(event);
-           if (currentMap->dataSize > 0) editItem(currentMap);
-         break;
-         case kbDel:
-           if (currentMap->editorType == etScrollBarEditor ||
-               currentMap->editorType == etLinkEditor)
-               strcpy((char *)data + currentMap->offset, blank);
-           drawView();
-           clearEvent(event);
-         break;
-      }
-   }
+        }
+    }
+    else if (event.what == evMouseDown) {
+        Locate = makeLocal(event.mouse.where);
+        if (Locate.x == separator) {
+            do {
+                Locate = makeLocal(event.mouse.where);
+                if ((Locate.x >= 1) && (Locate.x <= (size.x - 2))) {
+                    separator = Locate.x; drawView();
+                }
+            } while ( mouseEvent( event, evMouseMove ) );
+        } else {
+            t = itemForLine(Locate.y, dataMap);
+            if ((t) && t != currentMap) {
+                sb->setValue(t->index);
+                currentMap = t;
+                drawView();
+            }
+            else if ((t == currentMap) && (event.mouse.doubleClick) && (event.mouse.buttons == mbLeftButton)) {
+                editItem(currentMap);
+            }
+        }
+    } else
+        if (event.what == evKeyboard) {
+            switch(event.keyDown.keyCode) {
+                case kbUp:
+                    if (currentMap->prev) {
+                        currentMap = currentMap->prev;
+                        if (currentMap->dataSize == 0)
+                            if (currentMap->prev) currentMap = currentMap->prev;
+                        _endcase_(next);
+                    }
+                    break;
+
+                case kbDown:
+                    if (currentMap->next) {
+                        currentMap = currentMap->next;
+                        _endcase_(next);
+                    }
+                    break;
+
+                case kbPgUp:
+                    while (currentMap->prev)
+                        currentMap = currentMap->prev;
+                    _endcase_(next);
+                    break;
+
+                case kbPgDn:
+                    while (currentMap->next)
+                        currentMap = currentMap->next;
+                    _endcase_(prev);
+                    break;
+
+                case kbEnter:
+                    clearEvent(event);
+                    if (currentMap->dataSize > 0)
+                        editItem(currentMap);
+                    break;
+
+                case kbDel:
+                    if (currentMap->editorType == etScrollBarEditor || currentMap->editorType == etLinkEditor) strcpy((char *)data + currentMap->offset, blankString);
+                    drawView();
+                    clearEvent(event);
+                    break;
+            }
+        }
 }
 
 #undef _endcase_
@@ -1158,20 +1142,16 @@ TObjEdit::TObjEdit(TDsgObj * Obj):
    setObjData(Obj);
 }
 
-void TObjEdit::handleEvent(TEvent& event)
-{
-   TWindow::handleEvent(event);
-   if (object == 0) return;
-   if (event.what == evMessage &&
-       event.message.command == cmValueChanged)
-   {
-      object->dsgUpdate();
-      clearEvent(event);
-   }
+void TObjEdit::handleEvent(TEvent& event) {
+    TWindow::handleEvent(event);
+    if (object == 0) return;
+    if (event.what == evMessage && event.message.command == cmValueChanged) {
+        object->dsgUpdate();
+        clearEvent(event);
+    }
 }
 
-void TObjEdit::setObjData(TDsgObj * Obj)
-{
+void TObjEdit::setObjData(TDsgObj * Obj) {
    const TStructMap * Map = 0;
    
    if ((!Obj) || object == Obj) return;
@@ -1180,21 +1160,19 @@ void TObjEdit::setObjData(TDsgObj * Obj)
    
    object = Obj;
    
-   switch (Obj->viewType)
-   {
-      case vtLabel: Map = TLabelMap; break;
-      case vtInput: Map = TInputMap; break;
-      case vtMemo: Map = TMemoMap; break;
-      case vtStatic: Map = TStaticMap; break;
-      case vtButton: Map = TButtonMap; break;
-      case vtListBox: Map = TListBoxMap; break;
+   switch (Obj->viewType) {
+      case vtLabel:       Map = TLabelMap;   break;
+      case vtInput:       Map = TInputMap;   break;
+      case vtMemo:        Map = TMemoMap;    break;
+      case vtStatic:      Map = TStaticMap;  break;
+      case vtButton:      Map = TButtonMap;  break;
+      case vtListBox:     Map = TListBoxMap; break;
       case vtRadioButton: Map = TClusterMap; break;
-      case vtCheckBox: Map = TClusterMap; break;
-      case vtDialog: Map = TDialogMap; break;
-      default: Map = TViewMap;
+      case vtCheckBox:    Map = TClusterMap; break;
+      case vtDialog:      Map = TDialogMap;  break;
+      default:            Map = TViewMap;
    }
-   if (!Map)
-   {
+   if (!Map) {
       messageBox("Sem mapa!", mfOKButton);
       dataView->setMap(0, 0);
       return;

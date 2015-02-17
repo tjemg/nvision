@@ -35,7 +35,7 @@
       return buildStr(ctrlName, c, aObj->defaultData.a, a, &b);\
    else return blank\
 
-static char * blank = "";
+const char * blank = "";
 
 static int scrollCount = 0;
 
@@ -487,13 +487,13 @@ const char * buildCode(TDsgObj * aObj, char * buffer)
             var, //getDlgVariables(aObj),
             getDlgRectStr(aObj, v),
             getTextParam(aObj),
-            getOptions(aObj, "d"),
-            getEventMask(aObj, "d"),
-            getState(aObj, "d"),
-            getGrowMode(aObj, "d"),
-            getDragMode(aObj, "d"),
-            getHelpCtx(aObj, "d"),
-            getFlags(aObj, "d"),
+            getOptions(aObj,   (char *)"d"),
+            getEventMask(aObj, (char *)"d"),
+            getState(aObj,     (char *)"d"),
+            getGrowMode(aObj,  (char *)"d"),
+            getDragMode(aObj,  (char *)"d"),
+            getHelpCtx(aObj,   (char *)"d"),
+            getFlags(aObj,     (char *)"d"),
             getDlgViews(aObj) );
             scrollCount = 0;
          break;
