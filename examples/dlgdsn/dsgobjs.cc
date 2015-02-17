@@ -140,16 +140,11 @@ const char * TheClassName[vtDialog + 1] = { "TUser",
     else if (ImOwned(this) == ByEditor)                                     \
     { if (!HandleEventOnEditor(this, event, viewType)) a::handleEvent(event); }
 
-// Common getpalette function code fragment for editable classes
-// SET: Palettes are supposed to be constants, so they should call members
-// like here
 #define _p_(a,b,c)                                                          \
   static TPalette palette( a, sizeof(a) - 1);                               \
   static TPalette pal_sel( b, sizeof(b) - 1);                               \
   if (owner == TProgram::deskTop) return palette;                           \
   else return c::getPalette();
-/*  else if ((owner != TProgram::deskTop) && (getState(sfSelected)))          \
-    return pal_sel; else return c::getPalette();*/
 
 // Commom changeBounds code fragment for editable classes
 #define _chgbnds_(a) a::changeBounds(bounds); \
@@ -160,16 +155,13 @@ const char * TheClassName[vtDialog + 1] = { "TUser",
 #define _setstate_(t) do {                                                  \
   t::setState(aState, enable);                                              \
   if (aState & sfEditing && enable)                                         \
-/*{*/ ObjectLinker()->add(this, this); /* <- was DsgObj */                  \
-/*    setViewData((TDsgObjData &)*attributes); }  */                        \
+     ObjectLinker()->add(this, this);                                       \
   if (aState & (sfFocused | sfSelected) )                                   \
   { if (owner != EditDlg) { drawView(); return; }                           \
     if (enable) ObjEdit->setObjData(this); drawView(); } } while(0)
 
 // Commom shutDown code fragment for all editable classes
-#define _shutdown_(a) /* delete dsgObj; */ \
-/*  TDsgLink * l = ObjectLinker()->viewFind(this); */ \
-/*  if (l) delete l->d;  */ \
+#define _shutdown_(a) \
     a::shutDown()
 
 // Static *******************************************************************
@@ -198,7 +190,6 @@ static int UserCount    = 0;
 static int DialogCount  = 0;
 static int TabOrder     = 0;
 
-///extern TLinkList * ObjLink;
 
 // Holds the current mouse position on screen
 static MouseEventType * Mouse;
@@ -230,7 +221,6 @@ TDialog * CreateTool()
     TMemoData buf;
 
     d->flags &= ~wfClose;
-    // d->flags |= wfGrow;
     d->insert(new TDInputLine(TRect(2, 1, 7, 2)));
     d->insert(view = new TDLabel(TRect(8, 1, 13, 2)));
     view->options |= ofSelectable;
@@ -246,7 +236,7 @@ TDialog * CreateTool()
     d->insert(Memo = new TDMemo(TRect(31, 1, 37, 2)));
     buf.length = 6;
     strcpy(buf.buffer, " Memo ");
-//    Memo->setData(&buf);
+//    Memo->setData(&buf);  // FIXME?
     Memo->growMode = 0;
     d->insert(view = new THScrollBar(TRect(31, 3, 37, 4)));
     view->options |= ofSelectable;
@@ -259,14 +249,6 @@ TDialog * CreateTool()
 // Called to initialize the editor. if FileName = NULL creates a blank dialog
 void InitDlgEditor(const char * FileName)
 {
-/* if (EditDlg != 0)
-   {
-      if (!EditDlg->Save()) return;
-      TProgram::deskTop->remove(EditDlg);
-      TObject::destroy(EditDlg);
-      EditDlg = 0;
-   }*/
-
    Mouse = &TEventQueue::curMouse;
 
    if (!ObjEdit)
@@ -390,7 +372,6 @@ void DragObject(TView * P, TEvent& Event, TViewType vt)
    TRect Limits;
    TPoint Min, Max, mouse;
   
-//EditDlg->select();
    if (Event.what == evCommand) FloatingView = P;
    TProgram::deskTop->insert(P);
    Limits = TProgram::deskTop->getExtent();
@@ -406,7 +387,6 @@ void DragObject(TView * P, TEvent& Event, TViewType vt)
 }
 
 /* ImOwned --------------------------------------------------------------*/
-
 ushort ImOwned(TView * view)
 {
    if (view->owner == TProgram::deskTop) return ByDesktop; else
@@ -822,7 +802,6 @@ TDsgObj::~TDsgObj()
 
 char * TDsgObj::getScript(ushort ScriptType)
 {
-// criar e retorna um texto script conforme o tipo
  return 0;
 }
 
@@ -869,7 +848,6 @@ TDDialog::TDDialog():
    ObjEdit->setObjData(this);
    flags &= ~wfClose;
    flags |=  wfGrow | wfZoom;
-// options |= ofCentered;
    state |= sfEditing;
    EditDlg = this;
    setModified(False);
@@ -1008,7 +986,6 @@ Boolean TDDialog::Save(int aCommand) {
                 return True;
             }
         }
-        messageBox("Here A",mfOKButton);
         switch (cmd) {
             case cmYes:
                 saveToFile(fileName);
@@ -1020,35 +997,19 @@ Boolean TDDialog::Save(int aCommand) {
             case cmCancel:
                 return False;
         }
-    } //else return True;
+    }
     return True;  
 }
 
 static void saveObject(void * v, void * d)
 {
    TDsgLink * dsg = (TDsgLink *)v;
-#if 0
-   char buf[255];
-   if (dsg)
-   {
-      sprintf(buf, "Salvando objeto %s.",
-         ((TViewData *)dsg->d->attributes)->thisName);
-      messageBox(buf, 0);
-      SaveObject((ofpstream &)*d, dsg->d);
-   }
-#endif
-#if 1
    if (dsg) SaveObject(*((ofpstream *)d), dsg->d);
-#endif
 }
 
 Boolean TDDialog::saveToFile(const char * FileName) {
-    char tiago[2048];
-    sprintf(tiago,"Here B: %s",FileName);
-    messageBox(tiago,mfOKButton);
     ofpstream * S = initFile(FileName, fileName, (char *)dialogFileSig);
     if (S != 0) {
-        messageBox("Here C",mfOKButton);
         ofpstream& s = *S;
         s << viewType;
         s.writeBytes(attributes, vtAttrSize[viewType]);
@@ -1056,10 +1017,6 @@ Boolean TDDialog::saveToFile(const char * FileName) {
         s << LabelCount  << InputCount   << MemoCount
           << StaticCount << ButtonCount  << ListBoxCount << RadioCount
           << CheckCount  << VScrollCount << HScrollCount << UserCount;
-        sprintf(tiago, "%d %d %d %d %d %d %d %d %d %d %d", LabelCount  , InputCount   , MemoCount
-                                                         , StaticCount , ButtonCount  , ListBoxCount , RadioCount
-                                                         , CheckCount  , VScrollCount , HScrollCount , UserCount );
-        messageBox(tiago,mfOKButton);
         ObjectLinker()->sortForBuild();
         ObjectLinker()->forEach(&saveObject, &s);
         s << vtNone;
@@ -1097,7 +1054,6 @@ Boolean TDDialog::loadFromFile(const char * FileName)
     } while (first() != last);
 
     if (S != 0) {
-        char tiago[1024];
         ifpstream& s = *S;
 
         s >> vtAux; vt = (TViewType)vtAux;
@@ -1108,19 +1064,12 @@ Boolean TDDialog::loadFromFile(const char * FileName)
 
         void * attr = readDsgInfo(s, vt);
         memcpy(attributes, attr, vtAttrSize[vt]);
-        sprintf(tiago,"INFO: %d", sizeof(TViewData));
-        messageBox(tiago,mfOKButton);
         free(attr);
         char aux;
         s >> aux; GridState=aux ? True : False;
         s >> LabelCount  >> InputCount   >> MemoCount
           >> StaticCount >> ButtonCount  >> ListBoxCount >> RadioCount
           >> CheckCount  >> VScrollCount >> HScrollCount >> UserCount;
-        sprintf(tiago, "%d %d %d %d %d %d %d %d %d %d %d", LabelCount  , InputCount   , MemoCount
-                                                         , StaticCount , ButtonCount  , ListBoxCount , RadioCount
-                                                         , CheckCount  , VScrollCount , HScrollCount , UserCount );
-        messageBox(tiago,mfOKButton);
-
         dsgUpdate();
         TabOrder = 0;
         v = LoadObject(s);
@@ -1210,11 +1159,6 @@ TView * TDInputLine::createView(TView * aOwner)
 {
    TDInputData * d = (TDInputData *)attributes;
    TInputLine * rst = new TInputLine(getBounds(), d->maxLen);
-// if (d->validatorType != vtNone)
-//   switch(d->validatorType)
-//   {
-//
-//   }
    setupView(rst);
    if (InsertLink(d->thisName, rst, (TDialog *)aOwner))
       return 0;
@@ -1286,10 +1230,7 @@ TView * TDStaticText::Me() { return this; }
 void TDStaticText::dsgUpdate()
 {
    TDStaticData * d = (TDStaticData *)attributes;
-//  delete[] text;
-//  text = newStr(d->text);
-   text = d->text; // If was changed the text has been freed by the object
-                   // editor and the new pointer is in attributes data
+   text = d->text; 
    TDsgObj::dsgUpdate();
 //  drawView();
 }
@@ -1389,7 +1330,6 @@ TView * TDListBox::createView(TView * aOwner)
    int cols = (d->columns > 0) ? d->columns : 1;
    if (d->scrollBar >= 0) sb = FindScroll(d->scrollBar, (TDialog *)aOwner);
    TListBox * rst = new TListBox(getBounds(), cols, sb);
-// rst->newList(items);
    setupView(rst);
    if (InsertLink(d->thisName, rst, (TDialog *)aOwner))
       return 0;
@@ -1459,8 +1399,6 @@ void TDCheckBoxes::setState(ushort aState, Boolean enable)
 void TDCheckBoxes::changeBounds(const TRect& bounds) {_chgbnds_(TCheckBoxes); }
 
 TView * TDCheckBoxes::Me() { return this; }
-
-//void TDCheckBoxes::dsgUpdate() { TDsgObj::dsgUpDate(); }
 
 void * TDCheckBoxes::dsgGetData() { return strings; }
 

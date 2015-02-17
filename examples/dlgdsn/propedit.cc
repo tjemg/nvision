@@ -224,7 +224,6 @@ void TLinkList::removeMe(TDsgObj * aDsgObj)
    if (link)
    {
       TDsgObjData * data = (TDsgObjData *)aDsgObj->attributes;
-//    atFree(indexOf(link));
       this->free(link);
       switch(aDsgObj->viewType)
       {
@@ -328,41 +327,6 @@ void TLinkList::sort(ccSortFunc Compare)
 // Try to reorganize the objects in an ideal creation order
 void TLinkList::sortForBuild()
 {
-#if 0
-#define _item_move_(a) do { remove(tmp); atInsert(a, tmp); i++; } while(0)
-   int i = 0;
-   char * s1, * s2;
-   TViewData * attr = 0;
-   
-   if (count <= 1) return;
-   
-   doReOrder();
-   void * tmp;
-   do {
-      attr = (TViewData *)((TDsgLink *)items[i])->d->attributes;
-      if (tmp = linkFind(attr->thisName)) _item_move_( ((i + 1) < count) ? i + 1 : i );
-      i++;
-   } while (i < count);
-   i = 0;
-   do {
-      s1 = blankString;
-      s2 = blankString;
-      attr = (TViewData *)((TDsgLink *)items[i])->d->attributes;
-      if ((((TDsgLink *)items[i])->d)->viewType == vtListBox)
-         s1 = ((TDListBoxData *)attr)->scrollBar;
-      else if ((((TDsgLink *)items[i])->d)->viewType == vtMemo)
-      {
-         s1 = ((TDMemoData *)attr)->vScroll;
-         s2 = ((TDMemoData *)attr)->hScroll;
-      }
-      if (tmp = scrollFind(s2))
-        { _item_move_( ((i - 1) >= 0) ? i - 1: 0 ); if (s1 != blankString) i--; }
-      if (tmp = scrollFind(s1))
-        { _item_move_( ((i - 1) >= 0) ? i - 1: 0 ); }
-      i++;
-   } while (i < count);
-#undef _item_move_
-#endif
 }
 
 // Called by removeMe to notify dependencies
@@ -617,16 +581,6 @@ TStructMap& operator + ( TStructMap& map1, TStructMap& map2 )
      *new TStructMap("DragMode", sizeof(ushort), etDragModeEditor)+\
      *new TStructMap("HelpContext", sizeof(ushort), etHelpCtxEditor)
 
-/* TPoint origin;\
-   TPoint size;\
-   TNameStr className;\
-   TNameStr thisName;\
-   ushort options;\
-   ushort eventMask;\
-   ushort state;\
-   ushort growMode;\
-   ushort dragMode;\
-   ushort helpCtx\ */
 
 static const TStructMap * TViewMap = &(_viewmap_());
 
@@ -1182,19 +1136,6 @@ void TObjEdit::setObjData(TDsgObj * Obj) {
       return;
    }
    
-#if 0
-   int i = 0;
-   TStructMap * m = Map;
-   char c[100];
-   m = Map;
-   while (m->prev) m = m->prev;
-   while (m) { i += m->dataSize; m = m->next; };
-   if (i != Obj->getAttrSize())
-   {
-      sprintf(c, "diferenca mapa: %i  registro: %i", i, Obj->getAttrSize());
-      messageBox(c, mfOKButton);
-   }
-#endif
    dataView->vtCurrent = Obj->viewType;
    dataView->setMap(Map, Obj->attributes);
 }
