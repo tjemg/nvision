@@ -1,6 +1,7 @@
 SOURCES = $(wildcard *.cc)
 OBJECTS = $(subst .cc,.o,$(SOURCES))
 INCLUDE = -I../include
+C_FLAGS = -g3 -O0
 
 
 all: $(OBJECTS)

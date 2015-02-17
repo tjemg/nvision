@@ -612,7 +612,8 @@ TView * LoadObject( ipstream& s ) {
         return 0;
     p.x = 0;
     p.y = 0;
-    if (vt != vtDialog) rst = InitObject( p, vt, 0 );
+    if (vt != vtDialog)
+        rst = InitObject( p, vt, 0 );
     rst->setState(sfEditing, True);
     obj = ObjectLinker()->viewFind(rst)->d;
     memcpy(obj->attributes, attr, vtAttrSize[vt]);
@@ -807,7 +808,9 @@ void TDsgObj::setPos(TPoint neworigin, TPoint newsize)
 {
   ((TDsgObjData *)attributes)->origin = neworigin;
   ((TDsgObjData *)attributes)->size = newsize;
-  ((TDDialog *)Me()->owner)->setModified(True);
+  if (Me()->owner) {
+      ((TDDialog *)Me()->owner)->setModified(True);
+  }
 }
 
 TDsgObj::~TDsgObj()
@@ -848,8 +851,10 @@ void TDsgObj::dsgUpdate() {
         me->changeBounds(r);
     if (tabStop())
         ObjectLinker()->doReOrder();
-    ((TDDialog *)me->owner)->setModified(True);
-    me->owner->CLY_Redraw();
+    if (me->owner) {
+        ((TDDialog *)me->owner)->setModified(True);
+        me->owner->CLY_Redraw();
+    }
 }
 
 /* TDDialog =============================================================*/
@@ -957,19 +962,19 @@ void TDDialog::dlgRun()
    show();
 }
 
-void TDDialog::dinsert(TView * aView)
-{
+void TDDialog::dinsert(TView * aView) {
+   TDsgLink *dl;
+
    aView->options |= ofSelectable | ofFirstClick | ofPreProcess | ofPostProcess;
    aView->growMode = 0;
    aView->setState(sfEditing, true);
-   TDsgLink * dl = ObjectLinker()->viewFind(aView);
-   if ((dl) && dl->d->tabStop())
-   {
+   dl = ObjectLinker()->viewFind(aView);
+   if ((dl) && dl->d->tabStop()) {
       ((TDsgObjData *)dl->d->attributes)->tabOrder = TabOrder;
       TabOrder++;
    }
    insert(aView);
-   setModified(True);
+   setModified(true);
 }
 
 void TDDialog::changeBounds(const TRect& bounds) {_chgbnds_(TDialog); }
@@ -1120,7 +1125,7 @@ Boolean TDDialog::loadFromFile(const char * FileName)
         TabOrder = 0;
         v = LoadObject(s);
         while (v) {
-            dinsert(v);
+            dinsert(v); // FIXME?: loadObject also does insert
             TDsgLink *dsg = ObjectLinker()->viewFind(v);
             if (dsg) dsg->d->dsgUpdate();
             v = LoadObject(s);

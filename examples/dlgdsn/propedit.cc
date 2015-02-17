@@ -131,30 +131,34 @@ int execDialog(TDialog * dialog, void *data)
 /* TLinkList ============================================================*/
 
 // Sorter func by tabulation order
-static int byTabOrder(const void * key1, const void * key2)
-{
-   TDsgObj * d1  = (TDsgObj *)((TDsgLink *)key1)->d;
-   TDsgObj * d2  = (TDsgObj *)((TDsgLink *)key2)->d;
-   
-   bool d1CanTab = d1->tabStop();
-   bool d2CanTab = d2->tabStop();
-   
-   if (!d1CanTab && d2CanTab) return -1;
-   if (!d1CanTab && !d2CanTab) return 0;
-   if (d1CanTab && !d2CanTab) return 1;
-   
-   short t1 = ((TDsgObjData *)d1->attributes)->tabOrder;
-   short t2 = ((TDsgObjData *)d2->attributes)->tabOrder;
+static int byTabOrder(const void * key1, const void * key2) {
+    TDsgLink *link1 = *(TDsgLink **)key1;
+    TDsgLink *link2 = *(TDsgLink **)key2;
 
-   if (d1CanTab && d2CanTab)
-   {
-      if ((t1 > t2) - (t1 < t2) == 0)
-      {
-        if (d1 == ObjEdit->object) return 1;
-        if (d2 == ObjEdit->object) return -1;
-      } else return (t1 > t2) - (t1 < t2);
-   }
-   return 0;
+    TDsgObj *d1 = dynamic_cast<TDsgObj *>(link1->d);
+    TDsgObj *d2 = dynamic_cast<TDsgObj *>(link2->d);
+
+    bool d1CanTab = d1->tabStop();
+    bool d2CanTab = d2->tabStop();
+
+    if (!d1CanTab && d2CanTab) return -1;
+    if (!d1CanTab && !d2CanTab) return 0;
+    if (d1CanTab && !d2CanTab) return 1;
+
+    short t1 = ((TDsgObjData *)d1->attributes)->tabOrder;
+    short t2 = ((TDsgObjData *)d2->attributes)->tabOrder;
+
+    if (d1CanTab && d2CanTab) {
+        if ((t1 > t2) - (t1 < t2) == 0) {
+            if (d1 == ObjEdit->object)
+                return 1;
+            if (d2 == ObjEdit->object)
+                return -1;
+        } else {
+            return (t1 > t2) - (t1 < t2);
+        }
+    }
+    return 0;
 }
 /*
 static int byCreationOrder(void * key1, void * key2)
@@ -287,32 +291,32 @@ void TLinkList::freeItem(void * item)
 }
 
 // To reorganize the views in a correct tabulation order
-void TLinkList::doReOrder()
-{
-   short Tab = 0;
-   int i;
-   TDsgLink * dsg;
-   TDsgObjData * dsgData;
-   
-   if (count == 0) return;
+void TLinkList::doReOrder() {
+    short Tab = 0;
+    int i;
+    TDsgLink * dsg;
+    TDsgObjData * dsgData;
 
-   sort(byTabOrder);
-   
-   for (i = 0; i < count; i++)
-   {
-      dsg = (TDsgLink *)at(i);
-      dsgData = (TDsgObjData *)dsg->d->attributes;
-      if (dsg->d->tabStop())
-      {
-         dsgData->tabOrder = Tab;
-         Tab++;
-      }
-   }
-   for (i = count - 1; i > 0; i--)
-   {
-      dsg = (TDsgLink *)at(i);
-      dsg->v->makeFirst();
-   }
+    if (count == 0) return;
+
+    for (int ii=0; ii<count; ii++) {
+        dsg = (TDsgLink *)at(ii);
+    }
+
+    sort(byTabOrder);
+
+    for (i = 0; i < count; i++) {
+        dsg = (TDsgLink *)at(i);
+        dsgData = (TDsgObjData *)dsg->d->attributes;
+        if (dsg->d->tabStop()) {
+            dsgData->tabOrder = Tab;
+            Tab++;
+        }
+    }
+    for (i = count - 1; i > 0; i--) {
+        dsg = (TDsgLink *)at(i);
+        dsg->v->makeFirst();
+    }
 }
 
 // Sorting with qsort

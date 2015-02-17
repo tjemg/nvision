@@ -544,7 +544,9 @@ void TView::locate( TRect& bounds )
 
 void TView::makeFirst()
 {
-    putInFrontOf(owner->first());
+    if (owner) {
+        putInFrontOf(owner->first());
+    }
 }
 
 TPoint TView::makeGlobal( TPoint source )

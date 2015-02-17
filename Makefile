@@ -5,6 +5,8 @@ all:
 	cd names;    make
 	cd old_dep;  make
 	ar cr libtv.a classes/*.o compat/*.o stream/*.o names/*.o old_dep/*.o
+
+examples: all
 	cd examples; make
 
 clean:

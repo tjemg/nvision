@@ -29,16 +29,16 @@ typedef char TTitleStr[MAX_TITLE_LENGTH];
 struct TPoint;
 
 #define _viewdata_() \
-TPoint origin;       /*   8 */ \
-TPoint size;         /*   8 */ \
-TNameStr className;  /*  30 */ \
-TNameStr thisName;   /*  30 */ \
-ushort options;      /*   2 */ \
-ushort eventMask;    /*   2 */ \
-ushort state;        /*   2 */ \
-ushort growMode;     /*   2 */ \
-ushort dragMode;     /*   2 */ \
-ushort helpCtx       /*   2 */ \
+TPoint    origin;     /*   8 */ \
+TPoint    size;       /*   8 */ \
+TNameStr  className;  /*  30 */ \
+TNameStr  thisName;   /*  30 */ \
+ushort    options;    /*   2 */ \
+ushort    eventMask;  /*   2 */ \
+ushort    state;      /*   2 */ \
+ushort    growMode;   /*   2 */ \
+ushort    dragMode;   /*   2 */ \
+ushort    helpCtx     /*   2 */ \
 //                    88 % 4 = 0
 
 struct TDefaultData
