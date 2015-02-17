@@ -312,16 +312,16 @@ void TMyDialog::findString(TAX x) {
   // If doing a title search, get title string then clear line and
   // refocus else do same for author string.
   if (x) {
-	  inputLine2->getData(temp);
-    *inputLine2->data=EOS;
-    inputLine2->draw();
-	  inputLine2->selectAll(True);
+      inputLine2->getData(temp);
+      inputLine2->setData((void*)"");
+      inputLine2->draw();
+      inputLine2->selectAll(True);
   }
   else {
-    inputLine1->getData(temp);
-    *inputLine1->data=EOS;
-    inputLine1->draw();
-	  inputLine1->selectAll(True);
+      inputLine1->getData(temp);
+      inputLine1->setData((void*)"");
+      inputLine1->draw();
+      inputLine1->selectAll(True);
   }
 
   // If there's no string just return immediately.

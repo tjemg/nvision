@@ -227,18 +227,19 @@ void TMyDialog::addString() {
 	inputLine->getData(temp);
 
   // If there's anything to transfer to theCollection...
-	if (strlen(temp)) {
+        if (strlen(temp)) {
 
-    // ...transfer it.
-		theCollection->insert(temp);
-		listBox->setRange(theCollection->getCount());
-		listBox->drawView();
+            // ...transfer it.
+            theCollection->insert(temp);
+            listBox->setRange(theCollection->getCount());
+            listBox->drawView();
 
-    // Clear input line buffer, display & re-select.
-		*inputLine->data='\0';
-    inputLine->draw();
-		inputLine->selectAll(True);
-	}
+            // Clear input line buffer, display & re-select.
+            //*inputLine->data='\0';
+            inputLine->setData((void*)"");
+            inputLine->draw();
+            inputLine->selectAll(True);
+        }
   else
 
     // If nothing to insert, throw away the allocation.

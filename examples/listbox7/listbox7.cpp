@@ -385,13 +385,13 @@ void TMyDialog::findString(TAX x) {
 
     if (x) {
         inputLine2->getData(temp);
-        *inputLine2->data='\0';
+        inputLine2->setData((void*)"");
         inputLine2->draw();
         inputLine2->selectAll(True);
     }
     else {
         inputLine1->getData(temp);
-        *inputLine1->data='\0';
+        inputLine1->setData((void*)"");
         inputLine1->draw();
         inputLine1->selectAll(True);
     }

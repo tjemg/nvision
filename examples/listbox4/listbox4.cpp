@@ -255,19 +255,19 @@ void TMyDialog::addString() {
 	char *temp = new char[ifWidth+1];
 	inputLine->getData(temp);
 
-  // If there's anything to transfer to theCollection...
-	if (strlen(temp)) {
+        // If there's anything to transfer to theCollection...
+        if (strlen(temp)) {
 
-    // ...transfer it.
-		theCollection->insert(temp);
-		listBox->setRange(theCollection->getCount());
-		listBox->drawView();
+            // ...transfer it.
+            theCollection->insert(temp);
+            listBox->setRange(theCollection->getCount());
+            listBox->drawView();
 
-    // Clear input line buffer, display & re-select.
-		*inputLine->data= EOS;
-    inputLine->draw();
-		inputLine->selectAll(True);
-	}
+            // Clear input line buffer, display & re-select.
+            inputLine->setData((void*)"");
+            inputLine->draw();
+            inputLine->selectAll(True);
+        }
   else
 
     // If nothing to insert, throw away the allocation.

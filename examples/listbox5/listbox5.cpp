@@ -327,7 +327,7 @@ void TMyDialog::addString() {
         listBox->setRange(theCollection->getCount());
         listBox->drawView();
 
-        *inputLine->data = EOS;
+        inputLine->setData((void*)"");
         inputLine->draw();
         inputLine->selectAll(True);
     }
