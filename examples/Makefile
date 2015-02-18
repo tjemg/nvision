@@ -4,7 +4,8 @@ DIRS =  bhelp     clipboard  cyrillic  demo      desklogo   dlgdraw   \
         listbox4  listbox5   listbox6  listbox7                       \
         listvi    menunest   menuz     mess1     msgcls     password  \
         progba    sdlg       sdlg2     tcombo    terminal             \
-        testhelp  tprogb     tutorial  tvedit    tvhc       videomode
+        testhelp  tprogb     tutorial  tvedit    tvhc       videomode \
+        test_001
 
 
 .PHONY: clean all

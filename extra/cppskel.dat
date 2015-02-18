@@ -1,0 +1,129 @@
+//-------------------------------------------------------
+//
+//   @XX5.h: Header file for @XX5.cpp
+//
+//-------------------------------------------------------
+
+#if !defined( __@XX4_H )
+#define __@XX4_H
+
+#define Uses_TStreamable
+#define Uses_TStreamableClass
+#define Uses_TEvent
+#define Uses_TRect
+#define Uses_@XX2
+@ZZ6
+
+@ZZ9
+
+@ZZ7
+
+@ZZ2
+
+class @XX1 : public @XX2
+{
+
+public:
+
+    @XX1( );
+    @XX1( StreamableInit ) :
+           @XX2 (streamableInit),
+           TWindowInit(@XX1::initFrame) {};
+    virtual void handleEvent( TEvent& );
+    virtual Boolean valid( ushort );
+
+@ZZ1
+
+private:
+
+    virtual const char *streamableName() const
+        { return name; }
+
+protected:
+
+    virtual void write( opstream& );
+    virtual void *read( ipstream& );
+
+public:
+
+    static const char * const name;
+    static TStreamable *build();
+
+};
+
+inline ipstream& operator >> ( ipstream& is, @XX1& cl )
+    { return is >> (TStreamable&)cl; }
+inline ipstream& operator >> ( ipstream& is, @XX1*& cl )
+    { return is >> (void *&)cl; }
+inline opstream& operator << ( opstream& os, @XX1& cl )
+    { return os << (TStreamable&)cl; }
+inline opstream& operator << ( opstream& os, @XX1* cl )
+    { return os << (TStreamable *)cl; }
+
+
+#endif  // __@XX4_H
+
+@ZZ10
+//-------------------------------------------------------
+//                       @XX5.cpp
+//-------------------------------------------------------
+
+#define Uses_TEvent
+
+@ZZ9
+
+#if !defined( __@XX4_H )
+#include "@XX5.h"
+#endif
+
+@XX1::@XX1() :
+@ZZ5
+       TWindowInit(@XX1::initFrame)
+
+{
+@ZZ0
+ selectNext(False);
+}
+
+void @XX1::handleEvent( TEvent& event)
+{
+    @XX2::handleEvent(event);
+}
+
+Boolean @XX1::valid(ushort command)
+{
+   Boolean rslt = @XX2::valid(command);
+   if (rslt && (command == cmOK))
+     {
+     }
+   return rslt;
+}
+
+const char * const @XX1::name = "@XX1";
+
+void @XX1::write( opstream& os )
+{
+ @XX2::write( os );
+@ZZ4
+}
+
+void *@XX1::read( ipstream& is )
+{
+ @XX2::read( is );
+@ZZ3
+ return this;
+}
+
+TStreamable *@XX1::build()
+{
+    return new @XX1( streamableInit );
+}
+
+// From here to end of file may be removed if @XX1 will not be streamed.
+
+TStreamableClass @XX3( @XX1::name,
+                        @XX1::build,
+                        __DELTA(@XX1)
+                      );
+
+@ZZ8
